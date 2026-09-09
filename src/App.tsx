@@ -47,10 +47,10 @@ export default function App() {
     current: "",
     stage: "walk",
   });
-  const itemsRef = useRef<FoundItem[]>([]);
+  const sizeByPathRef = useRef<Map<string, number>>(new Map());
   const rootRef = useRef("");
   const phaseRef = useRef(phase);
-  itemsRef.current = items;
+  sizeByPathRef.current = new Map(items.map((i) => [i.path, i.size]));
   rootRef.current = root;
   phaseRef.current = phase;
 
@@ -68,8 +68,7 @@ export default function App() {
     listen<{ path: string; status: string }>("trash-progress", (event) => {
       if (phaseRef.current !== "cleaning") return;
       if (event.payload.status === "trashed") {
-        const size =
-          itemsRef.current.find((i) => i.path === event.payload.path)?.size ?? 0;
+        const size = sizeByPathRef.current.get(event.payload.path) ?? 0;
         addToDraft(rootRef.current, size);
         setCleanProgress((p) => ({ ...p, trashed: p.trashed + 1 }));
         setHistoryTick((n) => n + 1);
@@ -284,6 +283,18 @@ export default function App() {
                 <h2 className="mt-4 text-xl font-bold">Moving to Trash…</h2>
                 <div className="mx-auto mt-4 h-2 max-w-md overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
                   <div
+                    role="progressbar"
+                    aria-valuenow={
+                      cleanProgress.total
+                        ? Math.round(
+                            ((cleanProgress.trashed + cleanProgress.skipped) /
+                              cleanProgress.total) *
+                              100
+                          )
+                        : 0
+                    }
+                    aria-valuemin={0}
+                    aria-valuemax={100}
                     className="h-full rounded-full bg-black transition-[width] duration-200 dark:bg-white"
                     style={{
                       width: `${

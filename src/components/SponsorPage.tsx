@@ -25,7 +25,15 @@ export default function SponsorPage() {
           <span>${GOAL} goal</span>
         </div>
         <div className="mt-2 h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
-          <div className="h-full rounded-full bg-black dark:bg-white" style={{ width: `${pct}%` }} />
+          <div
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${pct}% of $${GOAL} funding goal reached`}
+            className="h-full rounded-full bg-black dark:bg-white"
+            style={{ width: `${pct}%` }}
+          />
         </div>
         <p className="mt-1 text-xs text-neutral-500">{pct}% funded</p>
       </div>

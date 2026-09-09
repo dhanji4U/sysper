@@ -188,6 +188,7 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
                 <button
                   type="button"
                   onClick={() => toggleOpen(type)}
+                  aria-expanded={isOpen}
                   className="text-xs font-medium underline"
                 >
                   {isOpen ? "Hide paths" : "Show paths"}
