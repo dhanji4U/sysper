@@ -18,13 +18,14 @@ pnpm install
 pnpm tauri dev
 ```
 
-Build:
+Build locally:
 
 ```bash
 pnpm tauri build
 ```
 
-Windows installers land in `src-tauri/target/release/bundle/`. Unsigned until code-signing certs are funded.
+**GitHub Releases (unsigned):** Actions → **Release** → Run workflow, or `git tag v1.0.0 && git push origin v1.0.0`.  
+Drafts Windows `.msi`/NSIS, Linux `.deb`/AppImage (x64 + ARM), macOS `.dmg` (Intel + Apple silicon). SmartScreen / Gatekeeper warnings are expected until code-signing certs are added as Actions secrets (see comments in `.github/workflows/release.yml`).
 
 ## Issues vs pull requests
 
