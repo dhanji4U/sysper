@@ -31,11 +31,11 @@ Drafts Windows `.msi`/NSIS, Linux `.deb`/AppImage (x64 + ARM), macOS `.dmg` (Int
 
 ## Issues vs pull requests
 
-| You found… | Do this |
-| --- | --- |
+| You found…                                 | Do this                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------- |
 | A bug, a bad skip, a wrong folder, a crash | **[Open an issue](https://github.com/dhanji4U/sysper/issues/new/choose)** |
-| A feature idea | Open an issue first (do not send a PR) |
-| A code change | Wait until an issue is accepted — unsolicited PRs may not be reviewed |
+| A feature idea                             | Open an issue first (do not send a PR)                                    |
+| A code change                              | Wait until an issue is accepted — unsolicited PRs may not be reviewed     |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 

@@ -50,7 +50,8 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
   const [open, setOpen] = useState<Set<string>>(() => new Set());
 
   const allPaths = useMemo(() => items.map((i) => i.path), [items]);
-  const allSelected = allPaths.length > 0 && allPaths.every((p) => selected.has(p));
+  const allSelected =
+    allPaths.length > 0 && allPaths.every((p) => selected.has(p));
 
   function toggle(path: string) {
     setSelected((prev) => {
@@ -93,8 +94,12 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
   if (items.length === 0) {
     return (
       <div className="rounded-xl border border-neutral-200 p-8 text-center dark:border-neutral-800">
-        <p className="text-lg font-medium">Sparkling clean — no dev junk found.</p>
-        <p className="mt-1 text-sm text-neutral-500">Try scanning a different folder.</p>
+        <p className="text-lg font-medium">
+          Sparkling clean — no dev junk found.
+        </p>
+        <p className="mt-1 text-sm text-neutral-500">
+          Try scanning a different folder.
+        </p>
       </div>
     );
   }
@@ -127,7 +132,8 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
           const paths = list.map((i) => i.path);
           const groupChecked = paths.every((p) => selected.has(p));
           const groupSize = list.reduce((n, i) => n + i.size, 0);
-          const share = totalSize > 0 ? Math.round((groupSize / totalSize) * 100) : 0;
+          const share =
+            totalSize > 0 ? Math.round((groupSize / totalSize) * 100) : 0;
           return (
             <button
               key={type}
@@ -153,10 +159,14 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
               <div className="mt-3 h-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
                 <div
                   className="h-full bg-black dark:bg-white"
-                  style={{ width: `${Math.max(share, groupSize > 0 ? 2 : 0)}%` }}
+                  style={{
+                    width: `${Math.max(share, groupSize > 0 ? 2 : 0)}%`,
+                  }}
                 />
               </div>
-              <p className="mt-1 text-[11px] text-neutral-400">{share}% of junk</p>
+              <p className="mt-1 text-[11px] text-neutral-400">
+                {share}% of junk
+              </p>
             </button>
           );
         })}
@@ -184,7 +194,9 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
                 <span className="text-neutral-500">· {list.length}</span>
               </label>
               <div className="flex shrink-0 items-center gap-3">
-                <span className="text-sm font-medium tabular-nums">{formatBytes(groupSize)}</span>
+                <span className="text-sm font-medium tabular-nums">
+                  {formatBytes(groupSize)}
+                </span>
                 <button
                   type="button"
                   onClick={() => toggleOpen(type)}
@@ -198,17 +210,25 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
             {isOpen && (
               <ul className="max-h-56 divide-y divide-neutral-100 overflow-y-auto dark:divide-neutral-900">
                 {list.map((item) => (
-                  <li key={item.path} className="flex items-center gap-3 px-4 py-2 text-sm">
+                  <li
+                    key={item.path}
+                    className="flex items-center gap-3 px-4 py-2 text-sm"
+                  >
                     <input
                       type="checkbox"
                       checked={selected.has(item.path)}
                       onChange={() => toggle(item.path)}
                       className="h-4 w-4 shrink-0 accent-black dark:accent-white"
                     />
-                    <span className="min-w-0 flex-1 truncate font-mono text-xs" title={item.path}>
+                    <span
+                      className="min-w-0 flex-1 truncate font-mono text-xs"
+                      title={item.path}
+                    >
                       {item.path}
                     </span>
-                    <span className="shrink-0 font-medium tabular-nums">{formatBytes(item.size)}</span>
+                    <span className="shrink-0 font-medium tabular-nums">
+                      {formatBytes(item.size)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -219,8 +239,8 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
 
       {hasTarget && (
         <div className="rounded-xl border border-amber-400 bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-          Selection includes Rust <code>target/</code> folders. Rebuilds can take a
-          long time — only continue if you really want them in Trash.
+          Selection includes Rust <code>target/</code> folders. Rebuilds can
+          take a long time — only continue if you really want them in Trash.
         </div>
       )}
 
@@ -237,7 +257,10 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
         <button
           disabled={selectedItems.length === 0 || cleaning}
           onClick={() =>
-            onClean(selectedItems.map((i) => i.path), selectedSize)
+            onClean(
+              selectedItems.map((i) => i.path),
+              selectedSize
+            )
           }
           className="rounded-xl bg-black px-6 py-3 font-semibold text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
         >

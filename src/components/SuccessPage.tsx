@@ -11,7 +11,12 @@ interface Props {
 }
 
 const CONFETTI_COLORS = [
-  "#000000", "#22c55e", "#eab308", "#3b82f6", "#ef4444", "#a855f7",
+  "#000000",
+  "#22c55e",
+  "#eab308",
+  "#3b82f6",
+  "#ef4444",
+  "#a855f7",
 ];
 
 export default function SuccessPage({
@@ -35,15 +40,13 @@ export default function SuccessPage({
     []
   );
 
-  const tweet =
-    `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-      `I just freed ${formatBytes(freed)} of dev junk with Emiote Sysper — free, offline, moves to Trash.`
-    )}`;
-  const reddit =
-    `https://www.reddit.com/submit?${new URLSearchParams({
-      title: `I built a free tool that freed ${formatBytes(freed)} — Emiote Sysper`,
-      text: "Free offline dev-junk cleaner (Tauri + Rust). Moves to Trash, never deletes permanently.",
-    }).toString()}`;
+  const tweet = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+    `I just freed ${formatBytes(freed)} of dev junk with Emiote Sysper — free, offline, moves to Trash.`
+  )}`;
+  const reddit = `https://www.reddit.com/submit?${new URLSearchParams({
+    title: `I built a free tool that freed ${formatBytes(freed)} — Emiote Sysper`,
+    text: "Free offline dev-junk cleaner (Tauri + Rust). Moves to Trash, never deletes permanently.",
+  }).toString()}`;
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-neutral-200 p-10 text-center dark:border-neutral-800">
@@ -67,7 +70,8 @@ export default function SuccessPage({
       <p className="text-5xl">Done</p>
       <h2 className="mt-3 text-3xl font-bold">Freed {formatBytes(freed)}!</h2>
       <p className="mt-2 text-neutral-500">
-        {count} items moved to Trash (restorable). Total freed: {formatBytes(totalFreed)}
+        {count} items moved to Trash (restorable). Total freed:{" "}
+        {formatBytes(totalFreed)}
       </p>
 
       {skipped.length > 0 && (
@@ -76,11 +80,16 @@ export default function SuccessPage({
             Skipped {skipped.length} item{skipped.length === 1 ? "" : "s"}
           </p>
           <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
-            Locked, missing, or refused paths were skipped so the rest could still go to Trash.
+            Locked, missing, or refused paths were skipped so the rest could
+            still go to Trash.
           </p>
           <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto font-mono text-xs">
             {skipped.map((s) => (
-              <li key={s.path} className="truncate" title={`${s.path} — ${s.reason}`}>
+              <li
+                key={s.path}
+                className="truncate"
+                title={`${s.path} — ${s.reason}`}
+              >
                 {s.path} — {s.reason}
               </li>
             ))}

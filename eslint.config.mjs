@@ -1,9 +1,9 @@
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import react from 'eslint-plugin-react';
+import js from "@eslint/js";
+import tseslint from "typescript-eslint";
+import react from "eslint-plugin-react";
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'src-tauri/target'] },
+  { ignores: ["dist", "node_modules", "src-tauri/target"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -12,8 +12,8 @@ export default tseslint.config(
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': 'warn',
-      'react/react-in-jsx-scope': 'off',
+      "@typescript-eslint/no-unused-vars": "warn",
+      "react/react-in-jsx-scope": "off",
     },
   }
 );

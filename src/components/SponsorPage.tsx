@@ -16,8 +16,9 @@ export default function SponsorPage() {
       <p className="text-4xl">Support</p>
       <h2 className="mt-2 text-2xl font-bold">Help get Verified Publisher</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-neutral-500">
-        Code-signing certs cost ${GOAL}/year (Windows + Apple). Sponsors get Envault
-        FREE + their name on emiote.com/sysper#sponsors. 100% offline tool — no ads, no tracking.
+        Code-signing certs cost ${GOAL}/year (Windows + Apple). Sponsors get
+        Envault FREE + their name on emiote.com/sysper#sponsors. 100% offline
+        tool — no ads, no tracking.
       </p>
       <div className="mx-auto mt-5 max-w-md">
         <div className="flex justify-between text-sm font-semibold">

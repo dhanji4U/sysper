@@ -28,8 +28,9 @@ export default function SettingsPage({ dark, onToggleTheme }: Props) {
       <div className="rounded-xl border border-neutral-200 p-5 dark:border-neutral-800">
         <h3 className="font-semibold">Whitelist</h3>
         <p className="mt-1 text-sm text-neutral-500">
-          One path fragment per line (or comma-separated). Matching items are never
-          selected for Trash. Example: <code>my-important-project, company-monorepo</code>
+          One path fragment per line (or comma-separated). Matching items are
+          never selected for Trash. Example:{" "}
+          <code>my-important-project, company-monorepo</code>
         </p>
         <textarea
           value={raw}
@@ -44,8 +45,8 @@ export default function SettingsPage({ dark, onToggleTheme }: Props) {
       </div>
 
       <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-5 text-sm dark:border-neutral-800 dark:bg-neutral-950">
-        🛡️ <strong>Safety:</strong> Sysper only moves items to your OS Trash — nothing is
-        ever permanently deleted. You can always restore from Trash.
+        🛡️ <strong>Safety:</strong> Sysper only moves items to your OS Trash —
+        nothing is ever permanently deleted. You can always restore from Trash.
       </div>
     </div>
   );

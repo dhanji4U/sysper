@@ -20,19 +20,31 @@ export default function HistoryPage() {
       {draft && (
         <li className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
           <div className="min-w-0">
-            <p className="truncate font-mono text-xs" title={draft.root}>{draft.root}</p>
+            <p className="truncate font-mono text-xs" title={draft.root}>
+              {draft.root}
+            </p>
             <p className="text-neutral-500">
-              In progress · {new Date(draft.date).toLocaleString()} · {draft.count} items
+              In progress · {new Date(draft.date).toLocaleString()} ·{" "}
+              {draft.count} items
             </p>
           </div>
-          <span className="shrink-0 font-semibold">{formatBytes(draft.size)}</span>
+          <span className="shrink-0 font-semibold">
+            {formatBytes(draft.size)}
+          </span>
         </li>
       )}
       {history.map((h, i) => (
-        <li key={`${h.date}-${i}`} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+        <li
+          key={`${h.date}-${i}`}
+          className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
+        >
           <div className="min-w-0">
-            <p className="truncate font-mono text-xs" title={h.root}>{h.root}</p>
-            <p className="text-neutral-500">{new Date(h.date).toLocaleString()} · {h.count} items</p>
+            <p className="truncate font-mono text-xs" title={h.root}>
+              {h.root}
+            </p>
+            <p className="text-neutral-500">
+              {new Date(h.date).toLocaleString()} · {h.count} items
+            </p>
           </div>
           <span className="shrink-0 font-semibold">{formatBytes(h.size)}</span>
         </li>
