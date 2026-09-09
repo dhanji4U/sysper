@@ -2,6 +2,8 @@
 
 One-click cleaner for **dev junk** — `node_modules`, `dist`, `build`, `.next`, `target`, logs. Moves to **OS Trash** (never permanent delete). 100% offline, no signup.
 
+App icon is the orange Emiote tile with a white sweep catching a dust mote (`brand/sysper-icon.svg`). Rebuild icons with `pnpm tauri icon brand/sysper-icon-1024.png`.
+
 **Used it and something was wrong? [Open an issue](https://github.com/dhanji4U/sysper/issues/new/choose).** That is the main way to help. If a scan missed junk, skipped a folder, showed a Windows dialog, or touched something it should not — file it. Real reports from real machines matter more than drive-by PRs.
 
 ## Safety
