@@ -1,0 +1,47 @@
+name: Bug
+description: You used Sysper and something went wrong. File this.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If you used the app and it failed, skipped wrongly, or touched the wrong path — this is the right place. Thank you.
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Sysper version
+      placeholder: "1.0.0 or pnpm tauri dev"
+    validations:
+      required: false
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      placeholder: Scan never finished, Recycle Bin dialog, History empty, wrong folder listed…
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: false
+  - type: textarea
+    id: folder
+    attributes:
+      label: What you scanned
+      description: Folder type is enough (e.g. a folder of Node repos). Redact private names.
+    validations:
+      required: false

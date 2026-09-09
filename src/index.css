@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sysper-spinner,
+  .sysper-confetti-piece {
+    animation: none !important;
+  }
+}
+
+/* Spinner */
+@keyframes sysper-spin {
+  to { transform: rotate(360deg); }
+}
+.sysper-spinner {
+  animation: sysper-spin 0.9s linear infinite;
+}
+
+/* CSS-only confetti (no deps) */
+@keyframes sysper-confetti-fall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(720deg); opacity: 0.6; }
+}
+.sysper-confetti-piece {
+  position: absolute;
+  top: -4vh;
+  animation: sysper-confetti-fall linear infinite;
+}
