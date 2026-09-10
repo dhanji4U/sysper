@@ -214,4 +214,24 @@ Trust: 0 data loss, all Trash restorable, 0 .env touched
 
 H1 Emiote Sysper, H2 System Sweeper - Find the dust eating your memory, Sub Free up 50GB dev junk in 10s One click Trash safely 100% offline No signup, CTA Download Free Mac/Win/Linux 8MB, Trust ⭐️ 47GB avg freed 100% offline Trash Open Source, Sponsor CTA ❤️ Help get Verified Publisher $112/$184 Sponsors get Envault FREE, Next Tease Envault 1Password for .env first 50 FREE Join waitlist, Footer Part of Emiote Tools Privacy-first offline dev tools Built Tauri+Rust
 
+---
+
+## 14. Mandatory Engineering Lifecycle Protocol
+
+Every task (defect fix, new feature, or routine content elevation) MUST strictly follow this exact lifecycle:
+
+| Protocol Stage                    | Mandatory Rule Enforced                                                                                                                                                                          |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **1. Pre-Flight Status**          | Start from clean main (`git checkout main && git pull origin main --ff-only`).                                                                                                                   |
+| **2. Issue First**                | Mandatory GitHub Issue (`gh issue create`) defining evidence, severity, and acceptance contract before writing code.                                                                             |
+| **3. Branch Isolation**           | `fix/issue-<num>-<slug>` for defects, `feat/<slug>` for new features, `drishti/<slug>` for routine content.                                                                                      |
+| **4. Local Pre-Push Gate**        | Never push without passing `pnpm check` (0 errors), `pnpm test` (all tests pass), and `cargo check/test`.                                                                                        |
+| **5. Conventional Commits**       | Strict format: `fix(scope): ... (closes #<num>)` or `feat(scope): ... (<72 chars, imperative tense)`.                                                                                            |
+| **6. Coldtea PR Lens**            | Every PR is pushed and marked Ready for review (`gh pr ready <num>`) so Coldtea PR Lens automatically renders visual architectural diagrams.                                                     |
+| **7. CI Watching & Self-Healing** | Autonomously monitor `gh pr checks --watch`. If CI fails, diagnose root cause via `gh run view --log-failed`, resolve locally, and push until green.                                             |
+| **8. Human Approval Gate**        | Never auto-merge into main without explicit user request. Deliver the green, verified PR link for final review.                                                                                  |
+| **9. PR Completion Comment**      | ALWAYS post a comprehensive summary comment on the GitHub PR (`gh pr comment <num> --body "..."`) upon completion/merge detailing all gates passed, root causes resolved, and changes delivered. |
+
+---
+
 END v2
