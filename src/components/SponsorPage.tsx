@@ -16,8 +16,9 @@ export default function SponsorPage() {
       <p className="text-4xl">Support</p>
       <h2 className="mt-2 text-2xl font-bold">Help get Verified Publisher</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-neutral-500">
-        Code-signing certs cost ${GOAL}/year (Windows + Apple). Sponsors get Envault
-        FREE + their name on emiote.com/sysper#sponsors. 100% offline tool — no ads, no tracking.
+        Code-signing certs cost ${GOAL}/year (Windows + Apple). Sponsors get
+        Envault FREE + their name on emiote.com/sysper#sponsors. 100% offline
+        tool — no ads, no tracking.
       </p>
       <div className="mx-auto mt-5 max-w-md">
         <div className="flex justify-between text-sm font-semibold">
@@ -25,7 +26,15 @@ export default function SponsorPage() {
           <span>${GOAL} goal</span>
         </div>
         <div className="mt-2 h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
-          <div className="h-full rounded-full bg-black dark:bg-white" style={{ width: `${pct}%` }} />
+          <div
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${pct}% of $${GOAL} funding goal reached`}
+            className="h-full rounded-full bg-black dark:bg-white"
+            style={{ width: `${pct}%` }}
+          />
         </div>
         <p className="mt-1 text-xs text-neutral-500">{pct}% funded</p>
       </div>

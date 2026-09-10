@@ -9,7 +9,12 @@ interface Props {
   onError: (msg: string) => void;
 }
 
-export default function ScanButton({ scanning, onStart, onDone, onError }: Props) {
+export default function ScanButton({
+  scanning,
+  onStart,
+  onDone,
+  onError,
+}: Props) {
   async function pickAndScan() {
     const dir = await open({ directory: true, multiple: false });
     if (!dir || typeof dir !== "string") return;

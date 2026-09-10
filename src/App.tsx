@@ -33,30 +33,39 @@ export default function App() {
   const [dark, setDark] = useState(false);
 
   // Confirm modal state
-  const [pending, setPending] = useState<{ paths: string[]; size: number } | null>(null);
+  const [pending, setPending] = useState<{
+    paths: string[];
+    size: number;
+  } | null>(null);
   const [lastFreed, setLastFreed] = useState(0);
   const [lastCount, setLastCount] = useState(0);
   const [lastSkipped, setLastSkipped] = useState<SkippedItem[]>([]);
   const [skipAll, setSkipAll] = useState(true);
   const [totalFreed, setTotalFreed] = useState(0);
   const [historyTick, setHistoryTick] = useState(0);
-  const [cleanProgress, setCleanProgress] = useState({ trashed: 0, skipped: 0, total: 0 });
+  const [cleanProgress, setCleanProgress] = useState({
+    trashed: 0,
+    skipped: 0,
+    total: 0,
+  });
   const [scanProgress, setScanProgress] = useState({
     projects: 0,
     found: 0,
     current: "",
     stage: "walk",
   });
-  const itemsRef = useRef<FoundItem[]>([]);
+  const sizeByPathRef = useRef<Map<string, number>>(new Map());
   const rootRef = useRef("");
   const phaseRef = useRef(phase);
-  itemsRef.current = items;
+  sizeByPathRef.current = new Map(items.map((i) => [i.path, i.size]));
   rootRef.current = root;
   phaseRef.current = phase;
 
   useEffect(() => {
     const saved = localStorage.getItem("sysper:theme");
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+    const prefersDark = window.matchMedia?.(
+      "(prefers-color-scheme: dark)"
+    ).matches;
     const isDark = saved ? saved === "dark" : !!prefersDark;
     setDark(isDark);
     if (commitDraft()) setHistoryTick((n) => n + 1);
@@ -68,8 +77,7 @@ export default function App() {
     listen<{ path: string; status: string }>("trash-progress", (event) => {
       if (phaseRef.current !== "cleaning") return;
       if (event.payload.status === "trashed") {
-        const size =
-          itemsRef.current.find((i) => i.path === event.payload.path)?.size ?? 0;
+        const size = sizeByPathRef.current.get(event.payload.path) ?? 0;
         addToDraft(rootRef.current, size);
         setCleanProgress((p) => ({ ...p, trashed: p.trashed + 1 }));
         setHistoryTick((n) => n + 1);
@@ -123,7 +131,10 @@ export default function App() {
         skipAll,
       });
       const byPath = new Map(items.map((i) => [i.path, i.size]));
-      const freed = result.trashed.reduce((n, p) => n + (byPath.get(p) ?? 0), 0);
+      const freed = result.trashed.reduce(
+        (n, p) => n + (byPath.get(p) ?? 0),
+        0
+      );
       setLastFreed(freed);
       setLastCount(result.trashed.length);
       setLastSkipped(result.skipped);
@@ -170,22 +181,32 @@ export default function App() {
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
           <div>
             <h1 className="text-lg font-bold leading-tight">Emiote Sysper</h1>
-            <p className="text-xs text-neutral-500">System Sweeper · 100% offline · Trash only</p>
+            <p className="text-xs text-neutral-500">
+              System Sweeper · 100% offline · Trash only
+            </p>
           </div>
           <nav className="flex gap-1 text-sm">
-            {(["cleaner", "history", "sponsor", "settings"] as Tab[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`rounded-lg px-3 py-1.5 font-medium capitalize ${
-                  tab === t
-                    ? "bg-black text-white dark:bg-white dark:text-black"
-                    : "hover:bg-neutral-100 dark:hover:bg-neutral-900"
-                }`}
-              >
-                {t === "cleaner" ? "Cleaner" : t === "history" ? "History" : t === "sponsor" ? "Sponsor" : "Settings"}
-              </button>
-            ))}
+            {(["cleaner", "history", "sponsor", "settings"] as Tab[]).map(
+              (t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`rounded-lg px-3 py-1.5 font-medium capitalize ${
+                    tab === t
+                      ? "bg-black text-white dark:bg-white dark:text-black"
+                      : "hover:bg-neutral-100 dark:hover:bg-neutral-900"
+                  }`}
+                >
+                  {t === "cleaner"
+                    ? "Cleaner"
+                    : t === "history"
+                      ? "History"
+                      : t === "sponsor"
+                        ? "Sponsor"
+                        : "Settings"}
+                </button>
+              )
+            )}
           </nav>
         </div>
       </header>
@@ -194,7 +215,9 @@ export default function App() {
         {error && (
           <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
             <p className="font-semibold">Something went wrong</p>
-            <pre className="mt-1 whitespace-pre-wrap font-mono text-xs">{error}</pre>
+            <pre className="mt-1 whitespace-pre-wrap font-mono text-xs">
+              {error}
+            </pre>
             <button onClick={() => setError("")} className="mt-2 underline">
               Dismiss
             </button>
@@ -203,17 +226,22 @@ export default function App() {
 
         {tab === "history" && <HistoryPage key={historyTick} />}
         {tab === "sponsor" && <SponsorPage />}
-        {tab === "settings" && <SettingsPage dark={dark} onToggleTheme={() => setDark((d) => !d)} />}
+        {tab === "settings" && (
+          <SettingsPage dark={dark} onToggleTheme={() => setDark((d) => !d)} />
+        )}
 
         {tab === "cleaner" && (
           <>
             {phase === "idle" && (
               <div className="rounded-2xl border border-neutral-200 p-10 text-center dark:border-neutral-800">
                 <p className="text-5xl">Clean</p>
-                <h2 className="mt-3 text-2xl font-bold">Find the dust eating your memory</h2>
+                <h2 className="mt-3 text-2xl font-bold">
+                  Find the dust eating your memory
+                </h2>
                 <p className="mx-auto mt-2 max-w-md text-neutral-500">
                   Free up to 50GB of dev junk in 10 seconds. One click moves
-                  node_modules, dist, build & logs to Trash — safely, offline, no signup.
+                  node_modules, dist, build & logs to Trash — safely, offline,
+                  no signup.
                 </p>
                 <div className="mt-6">
                   <ScanButton
@@ -221,7 +249,12 @@ export default function App() {
                     onStart={(dir) => {
                       setError("");
                       setRoot(dir);
-                      setScanProgress({ projects: 0, found: 0, current: dir, stage: "walk" });
+                      setScanProgress({
+                        projects: 0,
+                        found: 0,
+                        current: dir,
+                        stage: "walk",
+                      });
                       phaseRef.current = "scanning";
                       setPhase("scanning");
                     }}
@@ -236,7 +269,8 @@ export default function App() {
                   />
                 </div>
                 <p className="mt-4 text-xs text-neutral-500">
-                  ⭐️ 47GB avg freed · 100% offline · Moves to Trash · Open Source
+                  ⭐️ 47GB avg freed · 100% offline · Moves to Trash · Open
+                  Source
                 </p>
               </div>
             )}
@@ -254,7 +288,10 @@ export default function App() {
                 <p className="mt-2 font-mono text-sm tabular-nums text-neutral-600 dark:text-neutral-400">
                   {scanProgress.found} junk items found
                 </p>
-                <p className="mt-1 truncate font-mono text-xs text-neutral-500" title={scanProgress.current || root}>
+                <p
+                  className="mt-1 truncate font-mono text-xs text-neutral-500"
+                  title={scanProgress.current || root}
+                >
                   {scanProgress.current || root}
                 </p>
               </div>
@@ -263,10 +300,16 @@ export default function App() {
             {phase === "results" && (
               <>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="min-w-0 truncate font-mono text-xs text-neutral-500" title={root}>
+                  <p
+                    className="min-w-0 truncate font-mono text-xs text-neutral-500"
+                    title={root}
+                  >
                     {root}
                   </p>
-                  <button onClick={reset} className="shrink-0 text-sm font-medium underline">
+                  <button
+                    onClick={reset}
+                    className="shrink-0 text-sm font-medium underline"
+                  >
                     Scan Again
                   </button>
                 </div>
@@ -284,6 +327,18 @@ export default function App() {
                 <h2 className="mt-4 text-xl font-bold">Moving to Trash…</h2>
                 <div className="mx-auto mt-4 h-2 max-w-md overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
                   <div
+                    role="progressbar"
+                    aria-valuenow={
+                      cleanProgress.total
+                        ? Math.round(
+                            ((cleanProgress.trashed + cleanProgress.skipped) /
+                              cleanProgress.total) *
+                              100
+                          )
+                        : 0
+                    }
+                    aria-valuemin={0}
+                    aria-valuemax={100}
                     className="h-full rounded-full bg-black transition-[width] duration-200 dark:bg-white"
                     style={{
                       width: `${
@@ -300,10 +355,13 @@ export default function App() {
                   />
                 </div>
                 <p className="mt-2 font-mono text-sm tabular-nums text-neutral-500">
-                  {cleanProgress.trashed + cleanProgress.skipped}/{cleanProgress.total || "…"} ·{" "}
-                  {cleanProgress.trashed} moved · {cleanProgress.skipped} skipped
+                  {cleanProgress.trashed + cleanProgress.skipped}/
+                  {cleanProgress.total || "…"} · {cleanProgress.trashed} moved ·{" "}
+                  {cleanProgress.skipped} skipped
                 </p>
-                <p className="mt-1 text-xs text-neutral-500">Restorable from OS Trash.</p>
+                <p className="mt-1 text-xs text-neutral-500">
+                  Restorable from OS Trash.
+                </p>
               </div>
             )}
 
@@ -327,8 +385,9 @@ export default function App() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 dark:bg-neutral-950">
             <h3 className="text-lg font-bold">Move to Trash?</h3>
             <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-              Move {pending.paths.length} folders/files ({formatBytes(pending.size)}) to
-              Trash? You can restore from Trash. We never delete permanently.
+              Move {pending.paths.length} folders/files (
+              {formatBytes(pending.size)}) to Trash? You can restore from Trash.
+              We never delete permanently.
             </p>
             <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm">
               <input
@@ -340,8 +399,8 @@ export default function App() {
               <span>
                 Skip all failures
                 <span className="mt-0.5 block text-xs text-neutral-500">
-                  If a folder is locked, missing, or refused, skip it and keep going.
-                  Uncheck to stop at the first trash error.
+                  If a folder is locked, missing, or refused, skip it and keep
+                  going. Uncheck to stop at the first trash error.
                 </span>
               </span>
             </label>
@@ -364,7 +423,8 @@ export default function App() {
       )}
 
       <footer className="border-t border-neutral-200 py-4 text-center text-xs text-neutral-500 dark:border-neutral-800">
-        Part of Emiote Tools · Privacy-first offline dev tools · Built with Tauri + Rust
+        Part of Emiote Tools · Privacy-first offline dev tools · Built with
+        Tauri + Rust
       </footer>
     </div>
   );

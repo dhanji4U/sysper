@@ -55,9 +55,8 @@ fn is_env_path(path: &Path) -> bool {
 }
 
 fn dir_size_parallel(path: &Path) -> u64 {
-    jwalk::WalkDir::new(path)
+    walkdir::WalkDir::new(path)
         .follow_links(false)
-        .skip_hidden(false)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter_map(|e| e.metadata().ok())

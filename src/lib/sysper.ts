@@ -118,5 +118,16 @@ export function loadWhitelistRaw(): string {
 }
 
 export function isWhitelisted(path: string, list: string[]): boolean {
-  return list.some((token) => token && path.includes(token));
+  const norm = path.replace(/\\/g, "/");
+  return list.some((token) => {
+    if (!token) return false;
+    const t = token.replace(/\\/g, "/");
+    const idx = norm.indexOf(t);
+    if (idx === -1) return false;
+    // Require the match to sit on path-segment boundaries (/ or string edge)
+    const before = idx === 0 || norm[idx - 1] === "/";
+    const after =
+      idx + t.length === norm.length || norm[idx + t.length] === "/";
+    return before && after;
+  });
 }
