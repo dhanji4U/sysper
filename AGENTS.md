@@ -1,4 +1,4 @@
-# AGENTS.md - Emiote Sysper (System Sweeper) - Complete Build Spec v2
+# AGENTS.md - Emiote Sysper (System Sweeper) - Complete Build Spec v3
 
 ## 1. Project Overview
 
@@ -7,63 +7,60 @@
 **Old Name:** LogSweeper (keep `emiote.com/logsweeper` 301 redirect to `/sysper`)
 **Domain:** `emiote.com/sysper`
 **Tagline:** Find the dust eating your memory. Free 50GB in 10 seconds.
-**One Liner:** One-click cleaner for dev junk - node_modules, dist, build, logs that eat your laptop.
-**Goal:** Free momentum product -> 2000 users -> 500 emails -> fund certs ($184) via sponsorship -> upsell to Envault (paid)
-**Brand:** Emiote - Privacy-first, offline, indie dev tools. No cloud, no tracking.
+**One Liner:** One-click cleaner for dev junk: node_modules, dist, build, logs that eat your laptop.
+**License:** 100% Free & Open Source (MIT)
+**Goal:** Free momentum product -> 2000 users -> 500 emails -> upsell to Keyper (paid local secret keeper)
+**Brand:** Emiote: Privacy-first, offline, indie dev tools. No cloud, no tracking.
 
 ---
 
 ## 2. Tech Stack & Versions
 
 **Website:** Astro v4.x, Tailwind CSS v3.x, File: src/pages/sysper/index.astro
-**Desktop App:** Tauri v2.1+, React 18 + TypeScript + Vite, Rust
+**Desktop App:** Tauri v2.1+, React 19 + TypeScript + Vite, Rust
 **Rust Crates:** trash=3.x (CRITICAL), walkdir=2.x, rayon=1.x, jwalk
 **Bundlers:** .dmg (Mac), .msi/.exe (Win), .AppImage + .deb (Linux)
-**Payments:** LemonSqueezy - sponsor-5, sponsor-10, sponsor-25
 
 ---
 
 ## 3. What Sysper DOES vs DOES NOT DO
 
-### DOES - V1.0 FREE MVP (Current Phase):
+### DOES - 100% Free Open Source Feature Set:
 
 1. Folder Select: User picks root folder (~/code)
-2. Deep Scan for: node_modules, dist, build, out, .next, .nuxt, .turbo, .parcel-cache, **pycache**, target, .gradle, logs, *.log, .DS_Store
+2. Deep Scan for: node_modules, dist, build, out, .next, .nuxt, .turbo, .parcel-cache, **pycache**, target, .gradle, logs, *.log, .DS_Store, coverage, Thumbs.db
 3. Size Calculation: per folder + total
 4. Grouping by type
 5. Checkboxes + Select All
 6. Clean: Move to OS Trash (NOT delete)
-7. Success: Freed 47GB + confetti + history
-8. History Page: last 10 cleans
-9. Sponsor Tab: Progress $/184 + sponsor buttons
-10. Settings: Whitelist, Dark/Light
-11. Safety warning: Moved to Trash
-12. Offline: 100% offline, no telemetry
-
-**V1.1 PRO ($17) - After 2000 users:**
-Auto-clean weekly, extra types (logs/cache/target), one-click clean all, whitelist, export, tray icon
+7. Success: Freed totals + confetti + history
+8. History Page: last 10 cleans with crash-resilient ledger
+9. Settings: Whitelist, Dark/Light theme
+10. Safety warning: Moved to Trash
+11. Offline: 100% offline, no telemetry
+12. Roadmap additions: weekly auto-clean background job, system tray icon, history export
 
 ### DOES NOT DO - Strictly Avoid:
 
-1. NEVER permanently delete - Only Trash. No fs::remove_dir_all
-2. NEVER delete source code - Never touch src, lib, .git, app
+1. NEVER permanently delete. Only Trash. No fs::remove_dir_all
+2. NEVER delete source code. Never touch src, lib, .git, app
 3. NEVER scan without permission
-4. NEVER touch .env files (Envault's job)
-5. NEVER require signup/login for free
+4. NEVER touch .env files (Keyper's job)
+5. NEVER require signup, login, or payments
 6. NEVER need internet
 7. NEVER auto-clean without confirmation
-8. NEVER clean target silently - extra warning
-9. NEVER bloat UI - No ads/popups
+8. NEVER clean target silently: extra warning required
+9. NEVER bloat UI: No ads, popups, or donation nag screens
 10. NEVER claim antivirus
 
 ---
 
 ## 4. How It Works (User Flow)
 
-Welcome -> Select Folder -> Scanning "Scanning 127 projects..." -> Results "47.3GB in 84 folders" grouped + checkboxes + Total Selected + [Clean to Trash] -> Confirmation "Move to Trash? Restorable" -> Cleaning progress -> Success "Freed 47.3GB! Total: 127GB" + [Share] + [Envault Waitlist] -> History
+Welcome -> Select Folder -> Scanning "Scanning 127 projects..." -> Results "47.3GB in 84 folders" grouped + checkboxes + Total Selected + [Clean to Trash] -> Confirmation "Move to Trash? Restorable" -> Cleaning progress -> Success "Freed 47.3GB! Total: 127GB" + [Share] + [Keyper Waitlist] -> History
 
 **Rust Scanner (scanner.rs):**
-walkdir + rayon parallel, if name in junk list -> calc size, add to results, skip recursion inside it, else continue. Return Vec<FoundFolder {path, type, size}>
+walkdir single-threaded discovery to skip junk internals, followed by parallel Rayon sizing. Return Vec<FoundFolder {path, type, size}>
 
 ---
 
@@ -71,13 +68,12 @@ walkdir + rayon parallel, if name in junk list -> calc size, add to results, ski
 
 Website:
 src/pages/sysper/index.astro (main)
-src/pages/sysper/thanks.astro (post-sponsor)
 src/pages/logsweeper/index.astro (301 redirect)
 
 App:
 src-tauri/src/scanner.rs
 src-tauri/src/trash.rs
-src/components/ScanButton, ResultsList, SuccessPage, SponsorPage, HistoryPage, SettingsPage
+src/components/ScanButton, ResultsList, SuccessPage, HistoryPage, SettingsPage
 
 ---
 
@@ -85,17 +81,16 @@ src/components/ScanButton, ResultsList, SuccessPage, SponsorPage, HistoryPage, S
 
 Sections:
 
-1. Header: Emiote logo + [Sysper] [Envault] [Tools] [GitHub]
-2. Hero: Badge FREE No signup Offline Trash, H1 Emiote Sysper, H2 System Sweeper, Sub Free 50GB, CTAs Mac/Win/Linux 8MB, Trust ⭐️ 47GB avg, Demo GIF 5s
-3. Sponsor Bar: ❤️ Help get Verified Publisher, Text certs cost $184, Progress Bar $112/$184, Buttons Sponsor $5/$10/$25 LemonSqueezy, Perk Envault FREE + name
-4. What it cleans: Grid 3x2 node_modules, dist/build/.next, .turbo, **pycache**, target, logs
-5. How it works: 3 steps Select, See 47GB, One Click Trash
-6. Safety: 🛡️ Moves to Trash, restore, offline, open source
-7. Comparison: Manual 2h vs Sysper 10s
-8. Testimonials after 100 users
-9. FAQ: safe? free? internet? unknown publisher? .env?
-10. Email Capture: Envault waitlist first 50 FREE
-11. Final CTA + Footer + Sponsors list #sponsors
+1. Header: Emiote logo + [Sysper] [Keyper] [Tools] [GitHub]
+2. Hero: Badge FREE Open Source Offline Trash, H1 Emiote Sysper, H2 System Sweeper, Sub Free 50GB, CTAs Mac/Win/Linux 8MB, Trust ⭐️ 47GB avg, Demo GIF 5s
+3. What it cleans: Grid 3x2 node_modules, dist/build/.next, .turbo, **pycache**, target, logs
+4. How it works: 3 steps Select, See 47GB, One Click Trash
+5. Safety: 🛡️ Moves to Trash, restore, offline, open source
+6. Comparison: Manual 2h vs Sysper 10s
+7. Testimonials after 100 users
+8. FAQ: safe? free? internet? unknown publisher? .env?
+9. Email Capture: Keyper waitlist first 50 FREE
+10. Final CTA + Footer
 
 SEO: Title "Emiote Sysper - Free System Sweeper | Free 50GB in 10s", Description "Free offline tool...", OG image 47GB screenshot, Canonical /sysper, Redirect /logsweeper -> /sysper 301
 
@@ -103,120 +98,94 @@ SEO: Title "Emiote Sysper - Free System Sweeper | Free 50GB in 10s", Description
 
 ## 7. Build Phases & Versions
 
-**Phase 0 Setup Day1 v0.0.1:**
+**Phase 0 Setup v0.0.1:**
 
-- Create Astro page /sysper/index.astro hero placeholders
-- Create /logsweeper redirect
 - Init Tauri app, add crates trash, walkdir, rayon, tailwind
-- Output: Empty window, Astro local
+- Set up automated pre-push checks and test frameworks
 
-**Phase 1 MVP FREE Day2-3 v1.0.0-free-unsigned:**
+**Phase 1 MVP v1.0.0 (Released):**
 
 - Build scanner.rs scan_folder(root) -> Vec, skip .git/src, junk list, size calc parallel, skip nested
 - Build trash.rs move_to_trash(paths) via trash crate
-- Build UI ScanButton dialog, Scanning progress, ResultsList grouped checkboxes, Confirm modal, Success confetti share Twitter, History localStorage
-- Test ~/code 10 projects, verify trash
-- Build tauri build -> dmg unsigned, msi unsigned, AppImage
-- Output: v1.0.0 binaries
+- Build UI ScanButton dialog, Scanning progress, ResultsList grouped checkboxes, Confirm modal, Success confetti, History localStorage
+- Build unsigned binaries: dmg, msi, exe, AppImage, deb, rpm
 
-**Phase 2 Landing + Sponsor Day4 v1.0.1-landing:**
+**Phase 2 Landing & Distribution v1.0.1:**
 
 - Finish Astro landing all sections
-- Create LemonSqueezy sponsor-5/10/25 donation
-- Add sponsor bar manual progress, thanks.astro
+- Add package manager manifests: Winget, Homebrew tap
 - Deploy /sysper production
-- Output: Landing live
 
-**Phase 3 Launch + Fund Day5-6 v1.0.2-launch:**
+**Phase 3 Launch & Community v1.0.2:**
 
-- Launch Reddit r/webdev r/rust r/SideProject, Product Hunt, Twitter 15s video, HN Show HN
-- Title: "I built free tool that freed 47GB - Emiote Sysper"
-- Monitor downloads, sponsor $0->$184, emails 500 goal
-- Output: 2000 users, $184 raised
+- Launch Reddit r/webdev r/rust r/SideProject, Product Hunt, Twitter video, HN Show HN
+- Title: "I built a free offline tool that freed 47GB: Emiote Sysper"
+- Monitor downloads, stars, and email captures for Keyper
 
-**Phase 4 Signed Day7-10 v1.1.0-signed:**
+**Phase 4 Signed Builds v1.1.0:**
 
-- Trigger $184 reached
-- Buy Windows OV cert SSL.com $84 pfx thumbprint
-- Apple Dev $99 Team ID cert
-- Update tauri.conf.json windows.certificateThumbprint + macos signing env APPLE_ID/PASSWORD/TEAM_ID
-- Build signed dmg msi
-- Update landing: Remove warning guide, badge ✅ Verified Publisher Emiote
-- Update app sponsor tab to celebration "🎉 Goal Reached! Thanks sponsors list"
-- Post celebration update
-- Output: v1.1.0 signed trusted
+- Sign Windows binaries using SignPath.io open-source signing program
+- Use commercial revenue from Keyper to fund Apple Developer account ($99/year)
+- Configure Tauri signing credentials and produce signed binaries for macOS Gatekeeper
 
-**Phase 5 PRO + Envault Week2+ v1.2.0-pro & v0.1.0-envault:**
+**Phase 5 Keyper Commercial Companion & Ecosystem:**
 
-- Sysper PRO $17 auto-clean, extra types, whitelist, tray, LemonSqueezy license
-- Envault repo emiote/envault Tauri, encrypted .env vault, pricing 50 FREE $11 $17 etc, landing /envault
-- Bundle Sysper Pro + Envault $29
-- Output: First revenue
+- Keyper repository emiote/keyper: encrypted local .env vault
+- Early-bird launch: $11 to $22 lifetime
+- In-app cross promotion: Sysper remains 100% free; users can optionally install Keyper for secret management
 
 ---
 
 ## 8. Certificate Strategy
 
-**Problem:** Win SmartScreen Unknown Publisher, Mac Gatekeeper cannot check
+**Phase 1 Unsigned Releases:**
+Documentation on landing and README:
+Windows: More info -> Run anyway
+macOS: Right-click Open -> Open, or xattr -cr /Applications/Emiote\ Sysper.app
 
-**Phase1 Unsigned $0:**
-Guide on landing:
-Windows: More info -> Run anyway, open source github.com/emiote/sysper
-Mac: Right-click Open -> Open, or xattr -cr /Applications/Emiote\ Sysper.app
+**Phase 2 Community & Package Manager Delivery:**
+Winget and Homebrew distribution bypass browser SmartScreen warnings.
+SignPath foundation program provides free Windows certificate signing for public open-source builds.
 
-**Phase2 Signed $184/year:**
-Win OV cert thumbprint in tauri.conf.json, Mac APPLE_ID env notarize, tauri build signed
-
-**Sponsor Rules:**
-Goal $184 one-time progress bar push, when hit STOP campaign, change to "🎉 $184 Goal Reached! Certs bought. Next build verified. Sponsors: list. Cert sponsor closed." Then forever monthly "Support Emiote Tools $5/mo" via GitHub Sponsors
-
----
-
-## 9. Pricing Ladder (FOMO)
-
-50 FREE momentum, 100 $11, 200 $17, 300 $19, 400 $20, 500 $21, After $22 lifetime
-Counter "32/50 FREE left", Bundle Pro+Envault $29, Sysper FREE basic forever
+**Phase 3 Unified Developer Identity:**
+Apple Developer Account ($99/year) funded by Keyper sales signs both products under Emiote.
 
 ---
 
-## 10. Do's and Don'ts for Agents
+## 9. Do's and Don'ts for Agents
 
-DO: <15MB binary, FAST scan <10s 100GB 100 projects rayon jwalk, Always Trash, Minimal UI 1 black button, Astro <100KB JS Lighthouse 95+, Sponsor heart not intrusive, Offline no telemetry, localStorage history, human readable size, confetti
+DO: <15MB binary, FAST scan <10s 100GB 100 projects rayon jwalk, Always Trash, Minimal UI 1 black button, Offline no telemetry, localStorage history, human readable size, confetti
 
-DON'T: No remove_dir_all, Don't scan inside node_modules, Don't scan .git .vscode src, Don't touch .env, No internet login free, No auto-clean without modal, Don't clean target without warning, No heavy deps, No ads popups, No antivirus claim, No heavy landing anim
-
----
-
-## 11. Success Metrics
-
-Week1: 2000 downloads, 500 emails, $184 sponsor, 50 stars
-Month1: 5000 downloads, 1000 emails, 50 Envault early, 20 PRO $17 = $340
-Trust: 0 data loss, all Trash restorable, 0 .env touched
+DON'T: No remove_dir_all, Don't scan inside node_modules, Don't scan .git .vscode src, Don't touch .env, No internet login, No auto-clean without modal, Don't clean target without warning, No heavy deps, No ads popups, No donation nag screens, No antivirus claim
 
 ---
 
-## 12. Checklist Files
+## 10. Success Metrics
+
+Week 1: 2000 downloads, 500 emails, 50 stars
+Trust: 0 data loss, all Trash restorable, 0 .env files touched
+
+---
+
+## 11. Checklist Files
 
 - src/pages/sysper/index.astro main landing
 - src/pages/logsweeper/index.astro 301 redirect
-- src/pages/sysper/thanks.astro thanks + waitlist
 - src-tauri/src/scanner.rs
 - src-tauri/src/trash.rs
-- src/components/SponsorPage.tsx
 - AGENTS.md this file root
 - GitHub github.com/emiote/sysper public MIT
-- LemonSqueezy sponsor-5/10/25
 - OG image 1200x630 47GB screenshot
 
 ---
 
-## 13. Final Brand Copy
+## 12. Final Brand Copy
 
-H1 Emiote Sysper, H2 System Sweeper - Find the dust eating your memory, Sub Free up 50GB dev junk in 10s One click Trash safely 100% offline No signup, CTA Download Free Mac/Win/Linux 8MB, Trust ⭐️ 47GB avg freed 100% offline Trash Open Source, Sponsor CTA ❤️ Help get Verified Publisher $112/$184 Sponsors get Envault FREE, Next Tease Envault 1Password for .env first 50 FREE Join waitlist, Footer Part of Emiote Tools Privacy-first offline dev tools Built Tauri+Rust
+H1 Emiote Sysper, H2 System Sweeper - Find the dust eating your memory, Sub Free up 50GB dev junk in 10s One click Trash safely 100% offline No signup, CTA Download Free Mac/Win/Linux 8MB, Trust ⭐️ 47GB avg freed 100% offline Trash Open Source, Next Tease Keyper 1Password for .env first 50 FREE Join waitlist, Footer Part of Emiote Tools Privacy-first offline dev tools Built Tauri+Rust
 
 ---
 
-## 14. Mandatory Engineering Lifecycle Protocol
+## 13. Mandatory Engineering Lifecycle Protocol
 
 Every task (defect fix, new feature, or routine content elevation) MUST strictly follow this exact lifecycle:
 
@@ -234,4 +203,4 @@ Every task (defect fix, new feature, or routine content elevation) MUST strictly
 
 ---
 
-END v2
+END v3
