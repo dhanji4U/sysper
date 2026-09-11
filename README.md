@@ -44,9 +44,9 @@ Grab the native installer for your operating system from [GitHub Releases](https
 > [!NOTE]
 > **Unsigned Release Instructions:**
 >
-> - **Windows:** SmartScreen may display "Unknown Publisher" — click **More info** &rarr; **Run anyway**.
+> - **Windows:** SmartScreen may display "Unknown Publisher" &mdash; click **More info** &rarr; **Run anyway**.
 > - **macOS:** Right-click `Emiote Sysper.app` &rarr; **Open**, or run `xattr -cr /Applications/Emiote\ Sysper.app`.
-> - Code-signing certificates cost $184/year. Once funded, these warnings will disappear.
+> - Unsigned builds are provided directly while automated code-signing workflows are established.
 
 ---
 
@@ -181,20 +181,6 @@ pnpm tauri build
 The compiled installer will be available in `src-tauri/target/release/bundle/`.
 
 ---
-
-<!-- TODO: Unhide sponsor section once LemonSqueezy checkout links are live and build is stable.
-
-## Sponsor & Fund Certs
-
-Apple Developer ($99/year) and Windows OV ($85/year) code-signing certificates cost **$184/year**.
-
-Until funded, users see "Unknown Publisher" warnings when installing. Sponsors receive **Envault FREE** plus permanent placement on [`emiote.com/sysper#sponsors`](https://emiote.com/sysper#sponsors).
-
-- [Sponsor $5 on LemonSqueezy](https://emiote.lemonsqueezy.com/checkout/buy/sysper-sponsor-5)
-- [Sponsor $10 on LemonSqueezy](https://emiote.lemonsqueezy.com/checkout/buy/sysper-sponsor-10)
-- [Sponsor $25 on LemonSqueezy](https://emiote.lemonsqueezy.com/checkout/buy/sysper-sponsor-25)
-
--->
 
 ## Contributing
 

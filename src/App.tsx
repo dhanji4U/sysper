@@ -5,7 +5,6 @@ import ScanButton from "./components/ScanButton";
 import ResultsList from "./components/ResultsList";
 import SuccessPage from "./components/SuccessPage";
 import HistoryPage from "./components/HistoryPage";
-import SponsorPage from "./components/SponsorPage";
 import SettingsPage from "./components/SettingsPage";
 import {
   addToDraft,
@@ -22,7 +21,7 @@ import {
 } from "./lib/sysper";
 
 type Phase = "idle" | "scanning" | "results" | "cleaning" | "success";
-type Tab = "cleaner" | "history" | "sponsor" | "settings";
+type Tab = "cleaner" | "history" | "settings";
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -186,27 +185,23 @@ export default function App() {
             </p>
           </div>
           <nav className="flex gap-1 text-sm">
-            {(["cleaner", "history", "sponsor", "settings"] as Tab[]).map(
-              (t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={`rounded-lg px-3 py-1.5 font-medium capitalize ${
-                    tab === t
-                      ? "bg-black text-white dark:bg-white dark:text-black"
-                      : "hover:bg-neutral-100 dark:hover:bg-neutral-900"
-                  }`}
-                >
-                  {t === "cleaner"
-                    ? "Cleaner"
-                    : t === "history"
-                      ? "History"
-                      : t === "sponsor"
-                        ? "Sponsor"
-                        : "Settings"}
-                </button>
-              )
-            )}
+            {(["cleaner", "history", "settings"] as Tab[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`rounded-lg px-3 py-1.5 font-medium capitalize ${
+                  tab === t
+                    ? "bg-black text-white dark:bg-white dark:text-black"
+                    : "hover:bg-neutral-100 dark:hover:bg-neutral-900"
+                }`}
+              >
+                {t === "cleaner"
+                  ? "Cleaner"
+                  : t === "history"
+                    ? "History"
+                    : "Settings"}
+              </button>
+            ))}
           </nav>
         </div>
       </header>
@@ -225,7 +220,6 @@ export default function App() {
         )}
 
         {tab === "history" && <HistoryPage key={historyTick} />}
-        {tab === "sponsor" && <SponsorPage />}
         {tab === "settings" && (
           <SettingsPage dark={dark} onToggleTheme={() => setDark((d) => !d)} />
         )}

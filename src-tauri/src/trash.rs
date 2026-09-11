@@ -246,7 +246,7 @@ fn move_to_trash_inner(
     for (i, p) in paths.iter().enumerate() {
         let path = Path::new(p);
 
-        // Safety: never trash .env files (Envault's job).
+        // Safety: never trash .env files (Keyper's job).
         if path.components().any(|c| {
             let s = c.as_os_str().to_string_lossy();
             s == ".env" || s.starts_with(".env.")
