@@ -136,7 +136,49 @@ SEO: Title "Emiote Sysper - Free System Sweeper | Free 50GB in 10s", Description
 
 ---
 
-## 8. Certificate Strategy
+## 8. Upcoming Features & Architecture Roadmap
+
+This section documents upcoming features, their technical architecture, and the concrete developer rationale for each:
+
+### 8.1 Inactivity and Last-Modified Detection
+
+- Rationale: Developers hesitate to trash build folders in repositories they are actively editing, because recompilation wastes time. By computing project age, Sysper gives developers confidence to clean stale projects while protecting active work.
+- Architecture: In `src-tauri/src/scanner.rs`, extract the project root folder's modification timestamp (`mtime`) using `std::fs::metadata`. Return `last_modified: Option<u64>` on `FoundItem`. In `src/components/ResultsList.tsx`, display relative age tags (such as "active 2 days ago" or "untouched for 6 months"). Add a safety filter setting to automatically preserve projects modified within the past 14 days.
+
+### 8.2 Live Search and Directory Inspection
+
+- Rationale: In workspaces with dozens of repositories, manual scrolling creates friction. Developers also want to inspect unfamiliar folders before sending them to Trash.
+- Architecture: Add a live text filter input at the top of `ResultsList.tsx` that filters visible items by directory name or path substring in real time. Add an action button on each item row using `@tauri-apps/plugin-opener` (`revealItemInDir`) to show the selected folder in Windows File Explorer, macOS Finder, or Linux file managers.
+
+### 8.3 Expanded Target Ecosystems
+
+- Rationale: Modern developers work across multiple language stacks. Adding common rebuildable targets brings Sysper to Python, Flutter, mobile, and .NET developers at zero scanning performance cost.
+- Architecture: Add the following patterns to `JUNK_PATTERNS` in `src-tauri/src/scanner.rs`:
+  - Python: `.venv`, `env`, `.mypy_cache`, `.ruff_cache`, `.ipynb_checkpoints`
+  - Dart & Flutter: `.dart_tool`, `build`
+  - .NET & C#: `bin`, `obj`
+  - macOS & iOS: `DerivedData`
+  - CMake & C++: `cmake-build-debug`, `cmake-build-release`
+    Update `TYPE_HINT` in `src/components/ResultsList.tsx` and unit tests in `src/lib/sysper.test.ts` to cover these new categories.
+
+### 8.4 Selection Presets
+
+- Rationale: Selecting or deselecting individual folders across dozens of projects is tedious. One-click preset pills allow users to configure cleanup targets in a single click.
+- Architecture: In `ResultsList.tsx`, add preset action pills: "Select All", "Deselect All", "Heavy items (>500MB)", and "Inactive projects (>30 days)". These presets compute selections over the existing React state array without triggering rescans.
+
+### 8.5 Scanner Depth Guard and Progressive Streaming
+
+- Rationale: Extremely deep folder nesting in monorepos or nested submodules can degrade scan speed. In addition, waiting for a full batch before showing any results makes large scans feel sluggish.
+- Architecture: In `src-tauri/src/scanner.rs`, enforce a maximum recursion depth of 8 levels. Emit discovered items in periodic batches over the Tauri `scan-progress` event so the UI populates progressively while parallel sizing continues.
+
+### 8.6 Machine-Wide Global Developer Caches
+
+- Rationale: Package managers and compilers accumulate tens of gigabytes in the user's home directory outside project folders (such as `~/.npm/_cacache`, `~/.cargo/registry/cache`, `~/.gradle/caches`).
+- Architecture: Add an optional "Global Caches" scan mode that checks well-known cache locations in user home directories (`dirs::home_dir`). These targets are categorized separately from project folders and use the same OS Trash safeguards.
+
+---
+
+## 9. Certificate Strategy
 
 **Phase 1 Unsigned Releases:**
 Documentation on landing and README:
@@ -152,7 +194,7 @@ Apple Developer Account ($99/year) funded by Keyper sales signs both products un
 
 ---
 
-## 9. Do's and Don'ts for Agents
+## 10. Do's and Don'ts for Agents
 
 DO: <15MB binary, FAST scan <10s 100GB 100 projects rayon jwalk, Always Trash, Minimal UI 1 black button, Offline no telemetry, localStorage history, human readable size, confetti
 
@@ -160,14 +202,14 @@ DON'T: No remove_dir_all, Don't scan inside node_modules, Don't scan .git .vscod
 
 ---
 
-## 10. Success Metrics
+## 11. Success Metrics
 
 Week 1: 2000 downloads, 500 emails, 50 stars
 Trust: 0 data loss, all Trash restorable, 0 .env files touched
 
 ---
 
-## 11. Checklist Files
+## 12. Checklist Files
 
 - src/pages/sysper/index.astro main landing
 - src/pages/logsweeper/index.astro 301 redirect
@@ -179,13 +221,13 @@ Trust: 0 data loss, all Trash restorable, 0 .env files touched
 
 ---
 
-## 12. Final Brand Copy
+## 13. Final Brand Copy
 
 H1 Emiote Sysper, H2 System Sweeper - Find the dust eating your memory, Sub Free up 50GB dev junk in 10s One click Trash safely 100% offline No signup, CTA Download Free Mac/Win/Linux 8MB, Trust ⭐️ 47GB avg freed 100% offline Trash Open Source, Next Tease Keyper 1Password for .env first 50 FREE Join waitlist, Footer Part of Emiote Tools Privacy-first offline dev tools Built Tauri+Rust
 
 ---
 
-## 13. Mandatory Engineering Lifecycle Protocol
+## 14. Mandatory Engineering Lifecycle Protocol
 
 Every task (defect fix, new feature, or routine content elevation) MUST strictly follow this exact lifecycle:
 

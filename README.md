@@ -188,7 +188,7 @@ We welcome bug reports, edge case identifications, and accepted feature discussi
 
 1. **Bug or safety report?** Please [Open an Issue](https://github.com/dhanji4U/sysper/issues/new/choose). Real reports from real machines help us ensure 100% data safety.
 2. **Feature idea?** Open an issue first to discuss scope before opening a PR.
-3. **Pull Requests:** All contributions must adhere to our [Mandatory Engineering Lifecycle Protocol](AGENTS.md#13-mandatory-engineering-lifecycle-protocol). See [CONTRIBUTING.md](CONTRIBUTING.md) for full instructions.
+3. **Pull Requests:** All contributions must adhere to our [Mandatory Engineering Lifecycle Protocol](AGENTS.md#14-mandatory-engineering-lifecycle-protocol). See [CONTRIBUTING.md](CONTRIBUTING.md) for full instructions.
 
 ---
 
