@@ -38,6 +38,39 @@ jobs:
       - name: Run tests (vitest)
         run: pnpm test
 
+  e2e:
+    name: E2E & Visual (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: pnpm test:e2e
+
+      - name: Upload screenshots artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots
+          path: test-results/
+          retention-days: 7
+
   backend:
     name: Backend (cargo check & test)
     strategy:
