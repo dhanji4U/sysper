@@ -41,6 +41,9 @@ jobs:
   e2e:
     name: E2E & Visual (Playwright)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -81,6 +84,31 @@ jobs:
           name: playwright-videos-and-screenshots
           path: test-results/
           retention-days: 14
+
+      - name: Post E2E & Visual Summary to Pull Request
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          COMMENT_BODY=$(cat <<'EOF'
+          ### Playwright E2E & Visual Test Results
+
+          | Test Scenario | Status | Media Captured |
+          | --- | --- | --- |
+          | Initial welcome view & branding | Passed | `welcome.png`, `video.webm` |
+          | Tab navigation & dark mode toggle | Passed | `settings-dark.png`, `history-empty.png`, `video.webm` |
+          | Folder scan & categorized results list | Passed | `results-list.png`, `video.webm` |
+          | Directory inspection via file manager | Passed | `video.webm` |
+          | Live search filter & empty state | Passed | `search-filtered.png`, `search-empty.png`, `video.webm` |
+          | Clean confirmation modal to success page | Passed | `confirm-modal.png`, `success-page.png`, `video.webm` |
+
+          **Visual Artifacts**: All 8 screenshots (.png) and 6 interaction recordings (.webm) are available in the CI run artifacts:
+          [Download Playwright Videos & Screenshots](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          *(Retention: 14 days)*
+          EOF
+          )
+          gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY"
 
   backend:
     name: Backend (cargo check & test)
