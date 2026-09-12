@@ -26,3 +26,8 @@ src-tauri/gen
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright
+test-results/
+playwright-report/
+
