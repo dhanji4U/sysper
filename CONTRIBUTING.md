@@ -42,7 +42,7 @@ To maintain strict safety guarantees and code quality, we follow an **Issue-Firs
 
 ## Mandatory Engineering Lifecycle Protocol
 
-All accepted PRs must strictly follow the lifecycle documented in [AGENTS.md](AGENTS.md#13-mandatory-engineering-lifecycle-protocol):
+All accepted PRs must strictly follow the lifecycle documented in [AGENTS.md](AGENTS.md#14-mandatory-engineering-lifecycle-protocol):
 
 | Stage                             | Rule                                                                                                                                    |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
