@@ -42,7 +42,7 @@ jobs:
     name: E2E & Visual (Playwright)
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
@@ -85,26 +85,97 @@ jobs:
           path: test-results/
           retention-days: 14
 
-      - name: Post E2E & Visual Summary to Pull Request
+      - name: Publish screenshots to preview branch
         if: always() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          COMMENT_BODY=$(cat <<'EOF'
-          ### Playwright E2E & Visual Test Results
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          TARGET_DIR=$(mktemp -d)
+          git clone --depth 1 --branch preview-snapshots "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "$TARGET_DIR" 2>/dev/null || {
+            mkdir -p "$TARGET_DIR"
+            cd "$TARGET_DIR"
+            git init
+            git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+            git checkout --orphan preview-snapshots
+          }
+          cd "$TARGET_DIR"
+          mkdir -p "pr-${PR_NUMBER}"
+          cp "$GITHUB_WORKSPACE"/test-results/screenshots/*.png "pr-${PR_NUMBER}/"
+          git add "pr-${PR_NUMBER}"
+          git commit -m "chore(ci): visual snapshot for PR #${PR_NUMBER} [skip ci]" || echo "No changes to commit"
+          git push origin preview-snapshots
 
-          | Test Scenario | Status | Media Captured |
-          | --- | --- | --- |
-          | Initial welcome view & branding | Passed | `welcome.png`, `video.webm` |
-          | Tab navigation & dark mode toggle | Passed | `settings-dark.png`, `history-empty.png`, `video.webm` |
-          | Folder scan & categorized results list | Passed | `results-list.png`, `video.webm` |
-          | Directory inspection via file manager | Passed | `video.webm` |
-          | Live search filter & empty state | Passed | `search-filtered.png`, `search-empty.png`, `video.webm` |
-          | Clean confirmation modal to success page | Passed | `confirm-modal.png`, `success-page.png`, `video.webm` |
+      - name: Post E2E & Visual Summary to Pull Request
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          RAW_BASE="https://raw.githubusercontent.com/${REPO}/preview-snapshots/pr-${PR_NUMBER}"
+          COMMENT_BODY=$(cat <<EOF
+          ### Playwright E2E & Visual Verification
 
-          **Visual Artifacts**: All 8 screenshots (.png) and 6 interaction recordings (.webm) are available in the CI run artifacts:
-          [Download Playwright Videos & Screenshots](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          | Test Scenario | Status |
+          | --- | --- |
+          | Initial welcome view & branding | Passed |
+          | Tab navigation & dark mode toggle | Passed |
+          | Folder scan & categorized results list | Passed |
+          | Directory inspection via file manager | Passed |
+          | Live search filter & empty state | Passed |
+          | Clean confirmation modal to success page | Passed |
+
+          ### Visual Screen Previews
+
+          <details open>
+          <summary><b>Welcome Screen</b></summary>
+
+          <img src="${RAW_BASE}/welcome.png" width="700" alt="Welcome Screen" />
+          </details>
+
+          <details open>
+          <summary><b>Results List</b></summary>
+
+          <img src="${RAW_BASE}/results-list.png" width="700" alt="Results List" />
+          </details>
+
+          <details>
+          <summary><b>Live Search Filter (alpha)</b></summary>
+
+          <img src="${RAW_BASE}/search-filtered.png" width="700" alt="Search Filtered" />
+          </details>
+
+          <details>
+          <summary><b>Live Search Empty State</b></summary>
+
+          <img src="${RAW_BASE}/search-empty.png" width="700" alt="Search Empty" />
+          </details>
+
+          <details>
+          <summary><b>Clean Confirmation Modal</b></summary>
+
+          <img src="${RAW_BASE}/confirm-modal.png" width="700" alt="Confirm Modal" />
+          </details>
+
+          <details>
+          <summary><b>Success Screen (Freed & Confetti)</b></summary>
+
+          <img src="${RAW_BASE}/success-page.png" width="700" alt="Success Page" />
+          </details>
+
+          <details>
+          <summary><b>Dark Mode Settings</b></summary>
+
+          <img src="${RAW_BASE}/settings-dark.png" width="700" alt="Dark Mode Settings" />
+          </details>
+
+          <br />
+
+          **Video Recordings & Artifacts**: Full .webm video recordings of all test journeys are available in the CI run artifacts:
+          [Download Playwright Videos & Screenshots](https://github.com/${REPO}/actions/runs/${{ github.run_id }})
           *(Retention: 14 days)*
           EOF
           )
