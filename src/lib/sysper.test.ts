@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   formatBytes,
   isWhitelisted,
+  filterFoundItems,
   loadHistory,
   pushHistory,
   addToDraft,
@@ -12,6 +13,7 @@ import {
   loadWhitelist,
   saveWhitelist,
   loadWhitelistRaw,
+  type FoundItem,
 } from "./sysper";
 
 // ---------- formatBytes ----------
@@ -166,5 +168,80 @@ describe("whitelist storage", () => {
   it("loadWhitelistRaw returns raw string", () => {
     saveWhitelist("foo\nbar");
     expect(loadWhitelistRaw()).toBe("foo\nbar");
+  });
+});
+
+// ---------- filterFoundItems ----------
+
+describe("filterFoundItems", () => {
+  const sampleItems: FoundItem[] = [
+    {
+      name: "node_modules",
+      path: "/users/dev/project-alpha/node_modules",
+      item_type: "node_modules",
+      size: 500,
+    },
+    {
+      name: "dist",
+      path: "/users/dev/project-alpha/dist",
+      item_type: "dist",
+      size: 100,
+    },
+    {
+      name: "target",
+      path: "/users/dev/project-beta/target",
+      item_type: "target",
+      size: 2000,
+    },
+    {
+      name: ".next",
+      path: "C:\\code\\gamma\\.next",
+      item_type: ".next",
+      size: 800,
+    },
+    {
+      name: "app.log",
+      path: "/users/dev/service/logs/app.log",
+      item_type: "logs",
+      size: 50,
+    },
+  ];
+
+  it("returns all items when query is empty or whitespace", () => {
+    expect(filterFoundItems(sampleItems, "")).toHaveLength(5);
+    expect(filterFoundItems(sampleItems, "   ")).toHaveLength(5);
+  });
+
+  it("filters by name substring case-insensitively", () => {
+    const results = filterFoundItems(sampleItems, "APP.LOG");
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe("app.log");
+  });
+
+  it("filters by path substring case-insensitively", () => {
+    const results = filterFoundItems(sampleItems, "alpha");
+    expect(results).toHaveLength(2);
+    expect(results.map((i) => i.path)).toEqual([
+      "/users/dev/project-alpha/node_modules",
+      "/users/dev/project-alpha/dist",
+    ]);
+  });
+
+  it("filters by Windows path substring", () => {
+    const results = filterFoundItems(sampleItems, "gamma");
+    expect(results).toHaveLength(1);
+    expect(results[0].path).toBe("C:\\code\\gamma\\.next");
+  });
+
+  it("filters by item_type substring case-insensitively", () => {
+    const results = filterFoundItems(sampleItems, "TARGET");
+    expect(results).toHaveLength(1);
+    expect(results[0].item_type).toBe("target");
+  });
+
+  it("returns empty array when no match is found", () => {
+    expect(
+      filterFoundItems(sampleItems, "nonexistent-query-string")
+    ).toHaveLength(0);
   });
 });
