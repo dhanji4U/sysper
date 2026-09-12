@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { formatBytes, type FoundItem } from "../lib/sysper";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { filterFoundItems, formatBytes, type FoundItem } from "../lib/sysper";
 
 interface Props {
   items: FoundItem[];
@@ -30,9 +31,20 @@ const TYPE_HINT: Record<string, string> = {
 };
 
 export default function ResultsList({ items, cleaning, onClean }: Props) {
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(items.map((i) => i.path))
+  );
+  const [open, setOpen] = useState<Set<string>>(() => new Set());
+
+  const filteredItems = useMemo(
+    () => filterFoundItems(items, query),
+    [items, query]
+  );
+
   const groups = useMemo(() => {
     const map = new Map<string, FoundItem[]>();
-    for (const item of items) {
+    for (const item of filteredItems) {
       const list = map.get(item.item_type) ?? [];
       list.push(item);
       map.set(item.item_type, list);
@@ -42,16 +54,15 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
       const sb = b[1].reduce((n, i) => n + i.size, 0);
       return sb - sa;
     });
-  }, [items]);
+  }, [filteredItems]);
 
-  const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(items.map((i) => i.path))
+  const allFilteredPaths = useMemo(
+    () => filteredItems.map((i) => i.path),
+    [filteredItems]
   );
-  const [open, setOpen] = useState<Set<string>>(() => new Set());
-
-  const allPaths = useMemo(() => items.map((i) => i.path), [items]);
   const allSelected =
-    allPaths.length > 0 && allPaths.every((p) => selected.has(p));
+    allFilteredPaths.length > 0 &&
+    allFilteredPaths.every((p) => selected.has(p));
 
   function toggle(path: string) {
     setSelected((prev) => {
@@ -74,7 +85,14 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
   }
 
   function selectAll(checked: boolean) {
-    setSelected(checked ? new Set(allPaths) : new Set());
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const p of allFilteredPaths) {
+        if (checked) next.add(p);
+        else next.delete(p);
+      }
+      return next;
+    });
   }
 
   function toggleOpen(type: string) {
@@ -90,6 +108,7 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
   const selectedSize = selectedItems.reduce((n, i) => n + i.size, 0);
   const hasTarget = selectedItems.some((i) => i.item_type === "target");
   const totalSize = items.reduce((n, i) => n + i.size, 0);
+  const filteredSize = filteredItems.reduce((n, i) => n + i.size, 0);
 
   if (items.length === 0) {
     return (
@@ -126,6 +145,62 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
           Select all
         </label>
       </div>
+
+      <div className="space-y-2">
+        <div className="relative">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filter by folder name, project, or type..."
+            aria-label="Filter found items"
+            className="w-full rounded-xl border border-neutral-300 bg-transparent px-4 py-2.5 pl-10 text-sm outline-none transition-colors focus:border-black dark:border-neutral-700 dark:focus:border-white"
+          />
+          <svg
+            className="pointer-events-none absolute left-3.5 top-3 h-4 w-4 text-neutral-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Clear filter"
+              className="absolute right-3 top-2.5 rounded px-1.5 py-0.5 text-xs text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        {query.trim() && (
+          <p className="text-xs text-neutral-500">
+            Showing {filteredItems.length} of {items.length} items (
+            {formatBytes(filteredSize)})
+          </p>
+        )}
+      </div>
+
+      {filteredItems.length === 0 && (
+        <div className="rounded-xl border border-neutral-200 p-8 text-center dark:border-neutral-800">
+          <p className="font-medium">No items match "{query}"</p>
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="mt-2 text-xs font-medium text-neutral-500 underline hover:text-neutral-900 dark:hover:text-white"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {groups.map(([type, list]) => {
@@ -226,6 +301,35 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
                     >
                       {item.path}
                     </span>
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          await revealItemInDir(item.path);
+                        } catch {
+                          // Silently handle if environment lacks opener support
+                        }
+                      }}
+                      title="Show in file manager"
+                      aria-label={`Show ${item.path} in file manager`}
+                      className="shrink-0 rounded-md p-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-white"
+                    >
+                      <svg
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                        />
+                      </svg>
+                    </button>
                     <span className="shrink-0 font-medium tabular-nums">
                       {formatBytes(item.size)}
                     </span>

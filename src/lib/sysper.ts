@@ -131,3 +131,18 @@ export function isWhitelisted(path: string, list: string[]): boolean {
     return before && after;
   });
 }
+
+/** Filter found items by name, path, or item type substring (case-insensitive). */
+export function filterFoundItems(
+  items: FoundItem[],
+  query: string
+): FoundItem[] {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return items;
+  return items.filter(
+    (item) =>
+      item.name.toLowerCase().includes(trimmed) ||
+      item.path.toLowerCase().includes(trimmed) ||
+      item.item_type.toLowerCase().includes(trimmed)
+  );
+}
