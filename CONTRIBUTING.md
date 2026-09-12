@@ -42,19 +42,19 @@ To maintain strict safety guarantees and code quality, we follow an **Issue-Firs
 
 ## Mandatory Engineering Lifecycle Protocol
 
-All accepted PRs must strictly follow the lifecycle documented in [AGENTS.md](AGENTS.md#14-mandatory-engineering-lifecycle-protocol):
+All accepted PRs must strictly follow the lifecycle documented in [AGENTS.md](AGENTS.md#13-mandatory-engineering-lifecycle-protocol):
 
-| Stage                             | Rule                                                                                                                      |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **1. Pre-Flight**                 | Start from clean `main` (`git checkout main && git pull origin main --ff-only`).                                          |
-| **2. Issue First**                | A GitHub Issue must exist defining evidence, severity, and acceptance contract before writing code.                       |
-| **3. Branch Isolation**           | Branch from `main`: `fix/issue-<num>-<slug>` for bugs, `feat/<slug>` for features, `drishti/<slug>` for routine content.  |
-| **4. Local Pre-Push Gate**        | Pass all 3 automated quality checks locally before pushing: `pnpm check`, `pnpm test`, and `cargo test`.                  |
-| **5. Conventional Commits**       | Use `<type>(<scope>): <description> (closes #<num>)` format. Imperative tense, <72 chars summary.                         |
-| **6. Coldtea PR Lens**            | Push branch and open PR in "Ready for review" mode so PR Lens automatically renders architectural diagrams.               |
-| **7. CI Watching & Self-Healing** | Monitor `gh pr checks --watch`. If CI fails, diagnose with `gh run view --log-failed`, fix locally, and push until green. |
-| **8. Human Approval**             | Never auto-merge into `main`. The PR is reviewed and approved by repository maintainers.                                  |
-| **9. PR Completion Comment**      | Post a completion summary comment on the GitHub PR (`gh pr comment <num> --body "..."`) upon merge.                       |
+| Stage                             | Rule                                                                                                                                    |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Pre-Flight**                 | Start from clean `main` (`git checkout main && git pull origin main --ff-only`).                                                        |
+| **2. Issue First**                | A GitHub Issue must exist defining evidence, severity, and acceptance contract before writing code.                                     |
+| **3. Branch Isolation**           | Branch from `main`: `fix/issue-<num>-<slug>` for bugs, `feat/<slug>` for features, `chore/<slug>` or `docs/<slug>` for routine content. |
+| **4. Local Pre-Push Gate**        | Pass all 3 automated quality checks locally before pushing: `pnpm check`, `pnpm test`, and `cargo test`.                                |
+| **5. Conventional Commits**       | Use `<type>(<scope>): <description> (closes #<num>)` format. Imperative tense, <72 chars summary.                                       |
+| **6. Coldtea PR Lens**            | Push branch and open PR in "Ready for review" mode so PR Lens automatically renders architectural diagrams.                             |
+| **7. CI Watching & Self-Healing** | Monitor `gh pr checks --watch`. If CI fails, diagnose with `gh run view --log-failed`, fix locally, and push until green.               |
+| **8. Human Approval**             | Never auto-merge into `main`. The PR is reviewed and approved by repository maintainers.                                                |
+| **9. PR Completion Comment**      | Post a completion summary comment on the GitHub PR (`gh pr comment <num> --body "..."`) upon merge.                                     |
 
 ---
 
