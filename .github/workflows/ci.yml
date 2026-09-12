@@ -63,13 +63,24 @@ jobs:
       - name: Run Playwright tests
         run: pnpm test:e2e
 
-      - name: Upload screenshots artifact
+      - name: Generate Visual Summary
+        if: always()
+        run: |
+          echo "### Playwright E2E & Visual Verification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact Type | Path |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          find test-results -type f \( -name "*.png" -o -name "*.webm" \) | sort | while read -r file; do
+            echo "| \`$(basename "$file")\` | \`$file\` |" >> $GITHUB_STEP_SUMMARY
+          done
+
+      - name: Upload visual artifacts (videos & screenshots)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-screenshots
+          name: playwright-videos-and-screenshots
           path: test-results/
-          retention-days: 7
+          retention-days: 14
 
   backend:
     name: Backend (cargo check & test)
