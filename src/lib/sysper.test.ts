@@ -5,9 +5,13 @@ import {
   filterFoundItems,
   formatRelativeAge,
   isActiveProject,
+  isHeavyItem,
+  isInactiveProject,
   loadPreserveActive,
   savePreserveActive,
   ACTIVE_THRESHOLD_DAYS,
+  HEAVY_THRESHOLD_BYTES,
+  INACTIVE_THRESHOLD_DAYS,
   loadHistory,
   pushHistory,
   addToDraft,
@@ -289,5 +293,31 @@ describe("project inactivity (§8.1)", () => {
     expect(loadPreserveActive()).toBe(false);
     savePreserveActive(true);
     expect(loadPreserveActive()).toBe(true);
+  });
+});
+
+// ---------- selection presets (§8.4) ----------
+
+describe("selection presets (§8.4)", () => {
+  const NOW = new Date("2026-09-18T12:00:00Z").getTime();
+  const secsAgo = (days: number) => Math.floor((NOW - days * 86400000) / 1000);
+
+  it("matches items strictly above 500MB", () => {
+    expect(HEAVY_THRESHOLD_BYTES).toBe(500 * 1024 * 1024);
+    expect(isHeavyItem({ size: HEAVY_THRESHOLD_BYTES })).toBe(false);
+    expect(isHeavyItem({ size: HEAVY_THRESHOLD_BYTES + 1 })).toBe(true);
+    expect(isHeavyItem({ size: 450 * 1024 * 1024 })).toBe(false);
+    expect(isHeavyItem({ size: 1200 * 1024 * 1024 })).toBe(true);
+  });
+
+  it("matches known mtimes older than 30 days, never unknown", () => {
+    expect(INACTIVE_THRESHOLD_DAYS).toBe(30);
+    expect(isInactiveProject(secsAgo(29), NOW)).toBe(false);
+    expect(isInactiveProject(secsAgo(31), NOW)).toBe(true);
+    expect(isInactiveProject(secsAgo(200), NOW)).toBe(true);
+    expect(isInactiveProject(secsAgo(2), NOW)).toBe(false);
+    expect(isInactiveProject(null, NOW)).toBe(false);
+    expect(isInactiveProject(undefined, NOW)).toBe(false);
+    expect(isInactiveProject(0, NOW)).toBe(false);
   });
 });
