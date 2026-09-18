@@ -1,4 +1,4 @@
-# AGENTS.md - Emiote Sysper (System Sweeper) - Complete Build Spec v3
+# AGENTS.md - Emiote Sysper (System Sweeper) - Complete Build Spec v4
 
 ## 1. Project Overview
 
@@ -231,18 +231,28 @@ H1 Emiote Sysper, H2 System Sweeper - Find the dust eating your memory, Sub Free
 
 Every task (defect fix, new feature, or routine content elevation) MUST strictly follow this exact lifecycle:
 
-| Protocol Stage                    | Mandatory Rule Enforced                                                                                                                                                                          |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **1. Pre-Flight Status**          | Start from clean main (`git checkout main && git pull origin main --ff-only`).                                                                                                                   |
-| **2. Issue First**                | Mandatory GitHub Issue (`gh issue create`) defining evidence, severity, and acceptance contract before writing code.                                                                             |
-| **3. Branch Isolation**           | `fix/issue-<num>-<slug>` for defects, `feat/<slug>` for new features, `chore/<slug>` or `docs/<slug>` for routine tasks.                                                                         |
-| **4. Local Pre-Push Gate**        | Never push without passing `pnpm check` (0 errors), `pnpm test` (all tests pass), and `cargo check/test`.                                                                                        |
-| **5. Conventional Commits**       | Strict format: `fix(scope): ... (closes #<num>)` or `feat(scope): ... (<72 chars, imperative tense)`.                                                                                            |
-| **6. Coldtea PR Lens**            | Every PR is pushed and marked Ready for review (`gh pr ready <num>`) so Coldtea PR Lens automatically renders visual architectural diagrams.                                                     |
-| **7. CI Watching & Self-Healing** | Autonomously monitor `gh pr checks --watch`. If CI fails, diagnose root cause via `gh run view --log-failed`, resolve locally, and push until green.                                             |
-| **8. Human Approval Gate**        | Never auto-merge into main without explicit user request. Deliver the green, verified PR link for final review.                                                                                  |
-| **9. PR Completion Comment**      | ALWAYS post a comprehensive summary comment on the GitHub PR (`gh pr comment <num> --body "..."`) upon completion/merge detailing all gates passed, root causes resolved, and changes delivered. |
+| Protocol Stage                    | Mandatory Rule Enforced                                                                                                                                                                                         |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Pre-Flight Status**          | Start from clean main (`git checkout main && git pull origin main --ff-only`).                                                                                                                                  |
+| **2. Issue First**                | Mandatory GitHub Issue (see §15: always `--body-file`, never inline `\n`) defining evidence, severity, and acceptance contract before writing code.                                                             |
+| **3. Branch Isolation**           | `fix/issue-<num>-<slug>` for defects, `feat/<slug>` for new features, `chore/<slug>` or `docs/<slug>` for routine tasks.                                                                                        |
+| **4. Local Pre-Push Gate**        | Never push without passing `pnpm check` (0 errors), `pnpm test` (all tests pass), and `cargo check/test`.                                                                                                       |
+| **5. Conventional Commits**       | Strict format: `fix(scope): ... (closes #<num>)` or `feat(scope): ... (<72 chars, imperative tense)`.                                                                                                           |
+| **6. Coldtea PR Lens**            | Every PR is pushed and marked Ready for review (`gh pr ready <num>`) so Coldtea PR Lens automatically renders visual architectural diagrams.                                                                    |
+| **7. CI Watching & Self-Healing** | Autonomously monitor `gh pr checks --watch`. If CI fails, diagnose root cause via `gh run view --log-failed`, resolve locally, and push until green.                                                            |
+| **8. Human Approval Gate**        | Never auto-merge into main without explicit user request. Deliver the green, verified PR link for final review.                                                                                                 |
+| **9. PR Completion Comment**      | ALWAYS post a comprehensive summary comment on the GitHub PR (see §15: `gh pr comment <num> --body-file <file>`) upon completion/merge detailing all gates passed, root causes resolved, and changes delivered. |
 
 ---
 
-END v3
+## 15. GitHub CLI writing rules
+
+PowerShell leaves `\n` untouched inside double-quoted strings, so `--body "...\n..."` posts literal backslash-n text. Issue #19, the PR #20 body, and one PR comment shipped that way and needed manual repair. Write every issue body, PR body, and comment from a markdown file.
+
+Use `--body-file` with `gh issue create`, `gh pr create`, `gh pr edit`, and `gh pr comment`. Write the file first, then pass its path. To fix a posted comment, patch it with `gh api repos/<owner>/<repo>/issues/comments/<id> --method PATCH -F body=@<file>`. Read back the result with `gh issue view` or `gh pr view` before moving on.
+
+Apply the antislop skill (`dhanji4u/skills`, installed at `~/.agents/skills/antislop`) to every issue, PR body, and comment: plain verbs, no em dashes, no padded triads, no stock AI vocabulary, and concrete change descriptions instead of procedural boilerplate.
+
+---
+
+END v4
