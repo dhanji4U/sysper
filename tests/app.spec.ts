@@ -189,9 +189,7 @@ test.describe("Sysper Desktop E2E and Visual Workflows", () => {
     await expect(
       page.getByRole("button", { name: "Clean to Trash" })
     ).toBeDisabled();
-    await page
-      .getByRole("button", { name: "Select all", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Select all", exact: true }).click();
     await expect(page.getByText("· 5 items")).toBeVisible();
   });
 
