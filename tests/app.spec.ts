@@ -178,6 +178,21 @@ test.describe("Sysper Desktop E2E and Visual Workflows", () => {
     await expect(
       page.getByRole("button", { name: "Clean to Trash" })
     ).toBeVisible();
+
+    // Presets compute over the visible list without rescanning.
+    await page.getByRole("button", { name: "Heavy (>500MB)" }).click();
+    await expect(page.getByText("· 1 items")).toBeVisible();
+    await page.getByRole("button", { name: "Inactive (>30d)" }).click();
+    await expect(page.getByText("· 2 items")).toBeVisible();
+    await page.getByRole("button", { name: "Deselect all" }).click();
+    await expect(page.getByText("· 0 items")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Clean to Trash" })
+    ).toBeDisabled();
+    await page
+      .getByRole("button", { name: "Select all", exact: true })
+      .click();
+    await expect(page.getByText("· 5 items")).toBeVisible();
   });
 
   test("executes clean confirmation flow to success page", async ({ page }) => {

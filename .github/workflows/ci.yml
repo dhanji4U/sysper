@@ -126,7 +126,7 @@ jobs:
           | Folder scan & categorized results list | Passed |
           | Directory inspection via file manager | Passed |
           | Live search filter & empty state | Passed |
-          | Project age tags & active preserve filter | Passed |
+          | Project age, preserve filter & presets | Passed |
           | Clean confirmation modal to success page | Passed |
 
           ### Visual Screen Previews
@@ -156,7 +156,7 @@ jobs:
           </details>
 
           <details>
-          <summary><b>Project Age Tags & Preserve Filter</b></summary>
+          <summary><b>Project Age, Preserve Filter & Presets</b></summary>
 
           <img src="${RAW_BASE}/age-preserve.png" width="700" alt="Age Preserve" />
           </details>

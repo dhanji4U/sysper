@@ -5,6 +5,8 @@ import {
   formatBytes,
   formatRelativeAge,
   isActiveProject,
+  isHeavyItem,
+  isInactiveProject,
   loadPreserveActive,
   savePreserveActive,
   type FoundItem,
@@ -129,6 +131,28 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
     });
   }
 
+  // One-click presets over the currently filtered list. Select/Deselect add
+  // or remove the visible items; Heavy/Inactive replace the whole selection
+  // with the matching visible items. Nothing rescans.
+  function applyPreset(kind: "all" | "none" | "heavy" | "inactive") {
+    if (kind === "all") {
+      setSelected((prev) => new Set([...prev, ...allFilteredPaths]));
+      return;
+    }
+    if (kind === "none") {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        for (const p of allFilteredPaths) next.delete(p);
+        return next;
+      });
+      return;
+    }
+    const match = filteredItems.filter((i) =>
+      kind === "heavy" ? isHeavyItem(i) : isInactiveProject(i.last_modified)
+    );
+    setSelected(new Set(match.map((i) => i.path)));
+  }
+
   function toggleOpen(type: string) {
     setOpen((prev) => {
       const next = new Set(prev);
@@ -199,6 +223,29 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
             them.
           </p>
         )}
+        <div
+          className="mt-4 flex flex-wrap gap-2"
+          role="group"
+          aria-label="Selection presets"
+        >
+          {(
+            [
+              { kind: "all", label: "Select all" },
+              { kind: "none", label: "Deselect all" },
+              { kind: "heavy", label: "Heavy (>500MB)" },
+              { kind: "inactive", label: "Inactive (>30d)" },
+            ] as const
+          ).map((preset) => (
+            <button
+              key={preset.kind}
+              type="button"
+              onClick={() => applyPreset(preset.kind)}
+              className="rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium hover:border-black hover:bg-neutral-100 dark:border-neutral-700 dark:hover:border-white dark:hover:bg-neutral-900"
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-2">

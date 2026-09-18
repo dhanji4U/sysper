@@ -10,6 +10,12 @@ export interface FoundItem {
 /** Projects touched within this window are considered active (default preserve). */
 export const ACTIVE_THRESHOLD_DAYS = 14;
 
+/** Items above this size count as heavy for the Heavy preset pill. */
+export const HEAVY_THRESHOLD_BYTES = 500 * 1024 * 1024;
+
+/** Projects untouched longer than this count as inactive for the Inactive preset pill. */
+export const INACTIVE_THRESHOLD_DAYS = 30;
+
 export interface SkippedItem {
   path: string;
   reason: string;
@@ -201,6 +207,31 @@ export function isActiveProject(
   const diffMs = nowMs - lastModified * 1000;
   if (diffMs < 0) return true;
   return diffMs < thresholdDays * 24 * 60 * 60 * 1000;
+}
+
+/** True when the item is strictly above the heavy size threshold. */
+export function isHeavyItem(
+  item: Pick<FoundItem, "size">,
+  threshold: number = HEAVY_THRESHOLD_BYTES
+): boolean {
+  return item.size > threshold;
+}
+
+/** True when the project has a known mtime older than `thresholdDays`. Unknown age never matches. */
+export function isInactiveProject(
+  lastModified: number | null | undefined,
+  nowMs: number = Date.now(),
+  thresholdDays: number = INACTIVE_THRESHOLD_DAYS
+): boolean {
+  if (
+    lastModified == null ||
+    !Number.isFinite(lastModified) ||
+    lastModified <= 0
+  )
+    return false;
+  const diffMs = nowMs - lastModified * 1000;
+  if (diffMs < 0) return false;
+  return diffMs > thresholdDays * 24 * 60 * 60 * 1000;
 }
 
 export function loadPreserveActive(): boolean {
