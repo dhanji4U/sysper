@@ -3,6 +3,11 @@ import {
   formatBytes,
   isWhitelisted,
   filterFoundItems,
+  formatRelativeAge,
+  isActiveProject,
+  loadPreserveActive,
+  savePreserveActive,
+  ACTIVE_THRESHOLD_DAYS,
   loadHistory,
   pushHistory,
   addToDraft,
@@ -243,5 +248,46 @@ describe("filterFoundItems", () => {
     expect(
       filterFoundItems(sampleItems, "nonexistent-query-string")
     ).toHaveLength(0);
+  });
+});
+
+// ---------- formatRelativeAge / isActiveProject / preserve setting ----------
+
+describe("project inactivity (§8.1)", () => {
+  const NOW = new Date("2026-09-18T12:00:00Z").getTime();
+  const secsAgo = (days: number) => Math.floor((NOW - days * 86400000) / 1000);
+
+  it("formats unknown and future timestamps", () => {
+    expect(formatRelativeAge(null, NOW)).toBe("age unknown");
+    expect(formatRelativeAge(undefined, NOW)).toBe("age unknown");
+    expect(formatRelativeAge(0, NOW)).toBe("age unknown");
+    expect(formatRelativeAge(Math.floor((NOW + 60000) / 1000), NOW)).toBe(
+      "just now"
+    );
+  });
+
+  it("formats active vs untouched buckets", () => {
+    expect(formatRelativeAge(secsAgo(1), NOW)).toBe("active 1 day ago");
+    expect(formatRelativeAge(secsAgo(2), NOW)).toBe("active 2 days ago");
+    expect(formatRelativeAge(secsAgo(21), NOW)).toBe("untouched for 3 weeks");
+    expect(formatRelativeAge(secsAgo(180), NOW)).toBe("untouched for 6 months");
+  });
+
+  it("detects the 14-day active boundary", () => {
+    expect(ACTIVE_THRESHOLD_DAYS).toBe(14);
+    expect(isActiveProject(secsAgo(2), NOW)).toBe(true);
+    expect(isActiveProject(secsAgo(13), NOW)).toBe(true);
+    expect(isActiveProject(secsAgo(15), NOW)).toBe(false);
+    expect(isActiveProject(secsAgo(200), NOW)).toBe(false);
+    expect(isActiveProject(null, NOW)).toBe(false);
+  });
+
+  it("persists the preserve-active safety filter (default ON)", () => {
+    localStorage.clear();
+    expect(loadPreserveActive()).toBe(true);
+    savePreserveActive(false);
+    expect(loadPreserveActive()).toBe(false);
+    savePreserveActive(true);
+    expect(loadPreserveActive()).toBe(true);
   });
 });

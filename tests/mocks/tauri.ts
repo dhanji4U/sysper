@@ -5,7 +5,11 @@ export interface MockItem {
   path: string;
   size: number;
   item_type: string;
+  last_modified?: number | null;
 }
+
+const nowSecs = () => Math.floor(Date.now() / 1000);
+const daysAgo = (days: number) => nowSecs() - days * 86400;
 
 export const SAMPLE_SCAN_ITEMS: MockItem[] = [
   {
@@ -13,30 +17,35 @@ export const SAMPLE_SCAN_ITEMS: MockItem[] = [
     path: "/mock/workspace/project-alpha/node_modules",
     size: 1024 * 1024 * 450,
     item_type: "node_modules",
+    last_modified: daysAgo(2),
   },
   {
     name: "dist",
     path: "/mock/workspace/project-alpha/dist",
     size: 1024 * 1024 * 35,
     item_type: "dist",
+    last_modified: daysAgo(2),
   },
   {
     name: "target",
     path: "/mock/workspace/backend-rust/target",
     size: 1024 * 1024 * 1200,
     item_type: "target",
+    last_modified: daysAgo(200),
   },
   {
     name: ".next",
     path: "/mock/workspace/web-next/.next",
     size: 1024 * 1024 * 180,
     item_type: ".next",
+    last_modified: daysAgo(45),
   },
   {
     name: "app.log",
     path: "/mock/workspace/logs/app.log",
     size: 1024 * 1024 * 12,
     item_type: "logs",
+    last_modified: null,
   },
 ];
 

@@ -31,9 +31,7 @@ mod win_recycle {
 
     use windows_sys::Win32::Foundation::{CloseHandle, LocalFree, ERROR_SHARING_VIOLATION};
     use windows_sys::Win32::Security::Authorization::ConvertSidToStringSidW;
-    use windows_sys::Win32::Security::{
-        GetTokenInformation, TOKEN_USER, TOKEN_QUERY, TokenUser,
-    };
+    use windows_sys::Win32::Security::{GetTokenInformation, TokenUser, TOKEN_QUERY, TOKEN_USER};
     use windows_sys::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
 
     fn current_sid() -> Result<String, String> {
@@ -84,8 +82,8 @@ mod win_recycle {
                 .join(path)
         };
         let s = abs.to_string_lossy();
-        let is_unc = (s.starts_with(r"\\") && !s.starts_with(r"\\?\"))
-            || s.starts_with(r"\\?\UNC\");
+        let is_unc =
+            (s.starts_with(r"\\") && !s.starts_with(r"\\?\")) || s.starts_with(r"\\?\UNC\");
         if is_unc {
             return Err("Network path — Recycle Bin is not used for UNC shares".into());
         }
@@ -135,7 +133,8 @@ mod win_recycle {
     }
 
     fn io_reason(err: std::io::Error) -> String {
-        if err.raw_os_error() == Some(ERROR_SHARING_VIOLATION as i32) || err.raw_os_error() == Some(32)
+        if err.raw_os_error() == Some(ERROR_SHARING_VIOLATION as i32)
+            || err.raw_os_error() == Some(32)
         {
             return "In use by another program — close Node/IDE/terminal using this folder".into();
         }
@@ -154,9 +153,8 @@ mod win_recycle {
         let sid = current_sid()?;
         let bin = volume_root(&abs)?.join("$Recycle.Bin").join(&sid);
         if !bin.is_dir() {
-            std::fs::create_dir_all(&bin).map_err(|e| {
-                format!("Could not open Recycle Bin folder: {e}")
-            })?;
+            std::fs::create_dir_all(&bin)
+                .map_err(|e| format!("Could not open Recycle Bin folder: {e}"))?;
         }
 
         let size = std::fs::metadata(&abs).map(|m| m.len()).unwrap_or(0);

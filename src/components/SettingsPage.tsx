@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { loadWhitelistRaw, saveWhitelist } from "../lib/sysper";
+import {
+  loadPreserveActive,
+  loadWhitelistRaw,
+  savePreserveActive,
+  saveWhitelist,
+} from "../lib/sysper";
 
 interface Props {
   dark: boolean;
@@ -8,9 +13,11 @@ interface Props {
 
 export default function SettingsPage({ dark, onToggleTheme }: Props) {
   const [raw, setRaw] = useState("");
+  const [preserveActive, setPreserveActive] = useState(true);
 
   useEffect(() => {
     setRaw(loadWhitelistRaw());
+    setPreserveActive(loadPreserveActive());
   }, []);
 
   return (
@@ -23,6 +30,28 @@ export default function SettingsPage({ dark, onToggleTheme }: Props) {
         >
           Switch to {dark ? "Light" : "Dark"} mode
         </button>
+      </div>
+
+      <div className="rounded-xl border border-neutral-200 p-5 dark:border-neutral-800">
+        <h3 className="font-semibold">Safety filter</h3>
+        <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={preserveActive}
+            onChange={(e) => {
+              setPreserveActive(e.target.checked);
+              savePreserveActive(e.target.checked);
+            }}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-black dark:accent-white"
+          />
+          <span>
+            Preserve active projects (modified within 14 days)
+            <span className="mt-0.5 block text-xs text-neutral-500">
+              Active build folders are deselected by default so you avoid costly
+              rebuilds. Uncheck in results to include them.
+            </span>
+          </span>
+        </label>
       </div>
 
       <div className="rounded-xl border border-neutral-200 p-5 dark:border-neutral-800">
