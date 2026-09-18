@@ -1,7 +1,8 @@
 use rayon::prelude::*;
 use serde::Serialize;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::time::UNIX_EPOCH;
 use walkdir::WalkDir;
 
 /// One junk item found on disk.
@@ -11,6 +12,8 @@ pub struct FoundItem {
     pub name: String,
     pub size: u64,
     pub item_type: String,
+    /// Project-root mtime as secs since UNIX epoch. `None` = unknown.
+    pub last_modified: Option<u64>,
 }
 
 /// Directories that are safe to sweep (dev build junk).
@@ -38,20 +41,48 @@ const JUNK_DIRS: &[&str] = &[
 const JUNK_FILES: &[&str] = &[".DS_Store", "Thumbs.db"];
 
 /// Directories we NEVER descend into (source code / VCS / IDE).
-const SKIP_DIRS: &[&str] = &[
-    ".git",
-    "src",
-    "app",
-    "lib",
-    "components",
-    ".vscode",
-];
+const SKIP_DIRS: &[&str] = &[".git", "src", "app", "lib", "components", ".vscode"];
 
 fn is_env_path(path: &Path) -> bool {
     path.components().any(|c| {
         let s = c.as_os_str().to_string_lossy();
         s == ".env" || s.starts_with(".env.")
     })
+}
+
+/// Resolve the owning project root for a junk path.
+///
+/// - Workspace scan (`root=/code`, junk=`/code/proj-a/dist`) → `/code/proj-a`.
+/// - Single-project scan (`root=/code/proj`, junk=`/code/proj/dist`) → `/code/proj`.
+fn project_root_for(path: &Path, root: &Path) -> PathBuf {
+    if path == root {
+        return root.to_path_buf();
+    }
+    if let Ok(rel) = path.strip_prefix(root) {
+        let mut comps = rel.components();
+        if let Some(first) = comps.next() {
+            // Junk nested at least one project deep: first component is the project.
+            // Junk directly under root (single-project scan): the project is root itself.
+            if comps.next().is_some() {
+                return root.join(first);
+            }
+            return root.to_path_buf();
+        }
+    }
+    // Fallback for non-descendant paths: use the parent dir.
+    path.parent()
+        .map(|p| p.to_path_buf())
+        .unwrap_or_else(|| root.to_path_buf())
+}
+
+fn mtime_secs(p: &Path) -> Option<u64> {
+    std::fs::metadata(p)
+        .ok()?
+        .modified()
+        .ok()?
+        .duration_since(UNIX_EPOCH)
+        .ok()
+        .map(|d| d.as_secs())
 }
 
 fn dir_size_parallel(path: &Path) -> u64 {
@@ -119,9 +150,7 @@ pub fn scan_folder_inner(
     let mut projects: HashSet<PathBuf> = HashSet::new();
     let mut walked: u64 = 0;
 
-    let walker = WalkDir::new(&root_path)
-        .follow_links(false)
-        .into_iter();
+    let walker = WalkDir::new(&root_path).follow_links(false).into_iter();
 
     // Filter manually so we can call skip_current_dir().
     let mut it = walker.filter_entry(|e| {
@@ -208,11 +237,24 @@ pub fn scan_folder_inner(
         "size",
     );
 
-    // Phase 2: parallel size calculation (rayon across candidates).
+    // Phase 2: project-root mtimes (one metadata call per project, not per file).
+    let mut mtime_cache: HashMap<PathBuf, Option<u64>> = HashMap::new();
+    for (path, _) in dir_candidates.iter().chain(file_candidates.iter()) {
+        let proj = project_root_for(path, &root_path);
+        if !mtime_cache.contains_key(&proj) {
+            mtime_cache.insert(proj.clone(), mtime_secs(&proj));
+        }
+    }
+
+    // Phase 3: parallel size calculation (rayon across candidates).
     let mut dir_items: Vec<FoundItem> = dir_candidates
         .par_iter()
         .map(|(path, item_type)| {
             let size = dir_size_parallel(path);
+            let last_modified = mtime_cache
+                .get(&project_root_for(path, &root_path))
+                .copied()
+                .flatten();
             FoundItem {
                 path: path.to_string_lossy().to_string(),
                 name: path
@@ -221,6 +263,7 @@ pub fn scan_folder_inner(
                     .unwrap_or_default(),
                 size,
                 item_type: item_type.clone(),
+                last_modified,
             }
         })
         .collect();
@@ -229,6 +272,10 @@ pub fn scan_folder_inner(
         .par_iter()
         .map(|(path, item_type)| {
             let size = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
+            let last_modified = mtime_cache
+                .get(&project_root_for(path, &root_path))
+                .copied()
+                .flatten();
             FoundItem {
                 path: path.to_string_lossy().to_string(),
                 name: path
@@ -237,6 +284,7 @@ pub fn scan_folder_inner(
                     .unwrap_or_default(),
                 size,
                 item_type: item_type.clone(),
+                last_modified,
             }
         })
         .collect();
@@ -266,13 +314,81 @@ mod tests {
         fs::write(base.join("proj/.env"), "SECRET=1").unwrap();
         fs::write(base.join("proj/debug.log"), "log!").unwrap();
 
-        let items = scan_folder_inner(None, base.join("proj").to_string_lossy().to_string()).unwrap();
+        let items =
+            scan_folder_inner(None, base.join("proj").to_string_lossy().to_string()).unwrap();
         let paths: Vec<&str> = items.iter().map(|i| i.path.as_str()).collect();
         assert!(paths.iter().any(|p| p.contains("node_modules")));
         assert!(paths.iter().any(|p| p.contains("debug.log")));
         assert!(!paths.iter().any(|p| p.contains(".env")));
         assert!(!paths.iter().any(|p| p.contains("src")));
+        // §8.1: single-project scan reports the project-root mtime on every item.
+        assert!(!items.is_empty());
+        for item in &items {
+            assert!(
+                item.last_modified.is_some(),
+                "missing last_modified for {}",
+                item.path
+            );
+        }
         let _ = fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn reports_project_mtime_per_item() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let base = std::env::temp_dir().join("sysper_mtime_test");
+        let _ = fs::remove_dir_all(&base);
+        fs::create_dir_all(base.join("proj-a/node_modules/pkg")).unwrap();
+        fs::create_dir_all(base.join("proj-b/dist")).unwrap();
+        fs::write(
+            base.join("proj-a/node_modules/pkg/index.js"),
+            "x".repeat(50),
+        )
+        .unwrap();
+        fs::write(base.join("proj-b/dist/bundle.js"), "y".repeat(50)).unwrap();
+
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let items = scan_folder_inner(None, base.to_string_lossy().to_string()).unwrap();
+        assert_eq!(items.len(), 2);
+        for item in &items {
+            let mtime = item.last_modified.expect("last_modified should be Some");
+            assert!(
+                mtime <= now + 60,
+                "mtime {mtime} is in the future (now {now})"
+            );
+            assert!(mtime > now - 3600, "mtime {mtime} is unexpectedly old");
+        }
+        // Items from different projects each carry their own project-root mtime,
+        // and both are recent since the fixture was just created.
+        let a = items.iter().find(|i| i.path.contains("proj-a")).unwrap();
+        let b = items.iter().find(|i| i.path.contains("proj-b")).unwrap();
+        assert!(a.last_modified.is_some());
+        assert!(b.last_modified.is_some());
+        let _ = fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn project_root_resolution() {
+        let root = PathBuf::from("/code");
+        // Workspace scan: junk nested under a project.
+        assert_eq!(
+            project_root_for(Path::new("/code/proj-a/dist"), &root),
+            PathBuf::from("/code/proj-a")
+        );
+        // Single-project scan: junk directly under root.
+        let single = PathBuf::from("/code/proj");
+        assert_eq!(
+            project_root_for(Path::new("/code/proj/dist"), &single),
+            PathBuf::from("/code/proj")
+        );
+        // Log file inside a project.
+        assert_eq!(
+            project_root_for(Path::new("/code/proj-a/debug.log"), &root),
+            PathBuf::from("/code/proj-a")
+        );
     }
 
     #[test]
@@ -292,7 +408,11 @@ mod tests {
         ] {
             fs::create_dir_all(base.join(d)).unwrap();
         }
-        fs::write(base.join("proj-a/node_modules/pkg/index.js"), "x".repeat(1000)).unwrap();
+        fs::write(
+            base.join("proj-a/node_modules/pkg/index.js"),
+            "x".repeat(1000),
+        )
+        .unwrap();
         fs::write(base.join("proj-a/dist/bundle.js"), "y".repeat(500)).unwrap();
         fs::write(base.join("proj-a/src/keep.ts"), "keep me").unwrap();
         fs::write(base.join("proj-a/.env"), "SECRET=1").unwrap();
@@ -319,12 +439,17 @@ mod tests {
         ] {
             assert!(types.contains(&expected), "missing {expected} in {types:?}");
         }
-        assert!(items.iter().any(|i| i.item_type == "target" && i.size >= 2000));
+        assert!(items
+            .iter()
+            .any(|i| i.item_type == "target" && i.size >= 2000));
         let paths: Vec<&str> = items.iter().map(|i| i.path.as_str()).collect();
         assert!(!paths.iter().any(|p| p.contains(".env")));
         assert!(!paths.iter().any(|p| p.contains("src")));
         assert!(!paths.iter().any(|p| p.contains(".git")));
-        let nm = items.iter().find(|i| i.item_type == "node_modules").unwrap();
+        let nm = items
+            .iter()
+            .find(|i| i.item_type == "node_modules")
+            .unwrap();
         assert!(nm.size >= 1000);
         let _ = fs::remove_dir_all(&base);
     }

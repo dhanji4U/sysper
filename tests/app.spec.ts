@@ -141,6 +141,45 @@ test.describe("Sysper Desktop E2E and Visual Workflows", () => {
     await expect(page.getByText("target").first()).toBeVisible();
   });
 
+  test("shows project age tags and preserves active projects by default", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Select Folder & Scan" }).click();
+
+    // Safety filter defaults ON and reports the 2 preserved active items.
+    const preserve = page.getByRole("checkbox", {
+      name: /Preserve active projects/i,
+    });
+    await expect(preserve).toBeChecked();
+    await expect(page.getByText(/2 active projects preserved/i)).toBeVisible();
+
+    // Narrow to the active project, then expand its group to reveal age pills.
+    // (Groups sort by size, so without filtering the first row is stale.)
+    const search = page.getByPlaceholder(
+      "Filter by folder name, project, or type..."
+    );
+    await search.fill("project-alpha");
+    await page.getByRole("button", { name: "Show paths" }).first().click();
+    await expect(page.getByText("active 2 days ago").first()).toBeVisible();
+    await search.fill("backend-rust");
+    await page.getByRole("button", { name: "Show paths" }).first().click();
+    await expect(
+      page.getByText("untouched for 6 months").first()
+    ).toBeVisible();
+    await search.fill("");
+    await page.screenshot({
+      path: "test-results/screenshots/age-preserve.png",
+    });
+
+    // Active items start deselected; including them re-selects all 5.
+    await preserve.uncheck();
+    await expect(page.getByText(/2 active projects preserved/i)).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Clean to Trash" })
+    ).toBeVisible();
+  });
+
   test("executes clean confirmation flow to success page", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Select Folder & Scan" }).click();

@@ -3,7 +3,12 @@ export interface FoundItem {
   name: string;
   size: number;
   item_type: string;
+  /** Project-root mtime as secs since UNIX epoch. Absent/null = unknown. */
+  last_modified?: number | null;
 }
+
+/** Projects touched within this window are considered active (default preserve). */
+export const ACTIVE_THRESHOLD_DAYS = 14;
 
 export interface SkippedItem {
   path: string;
@@ -37,6 +42,7 @@ const HISTORY_KEY = "sysper:history";
 const TOTAL_KEY = "sysper:totalFreed";
 const WHITELIST_KEY = "sysper:whitelist";
 const DRAFT_KEY = "sysper:historyDraft";
+const PRESERVE_ACTIVE_KEY = "sysper:preserveActive";
 
 export function loadHistory(): HistoryEntry[] {
   try {
@@ -145,4 +151,72 @@ export function filterFoundItems(
       item.path.toLowerCase().includes(trimmed) ||
       item.item_type.toLowerCase().includes(trimmed)
   );
+}
+
+/** Human-readable relative age for a project-root mtime (secs since epoch). */
+export function formatRelativeAge(
+  lastModified: number | null | undefined,
+  nowMs: number = Date.now()
+): string {
+  if (
+    lastModified == null ||
+    !Number.isFinite(lastModified) ||
+    lastModified <= 0
+  )
+    return "age unknown";
+  const diffMs = nowMs - lastModified * 1000;
+  if (diffMs < 0) return "just now";
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "active 1 day ago";
+  if (days < 14) return `active ${days} days ago`;
+  if (days < 30) {
+    const weeks = Math.floor(days / 7);
+    return `untouched for ${weeks} week${weeks === 1 ? "" : "s"}`;
+  }
+  if (days < 365) {
+    const months = Math.floor(days / 30);
+    return `untouched for ${months} month${months === 1 ? "" : "s"}`;
+  }
+  const years = Math.floor(days / 365);
+  return `untouched for ${years} year${years === 1 ? "" : "s"}`;
+}
+
+/** True when the project was modified within `thresholdDays` (default 14). */
+export function isActiveProject(
+  lastModified: number | null | undefined,
+  nowMs: number = Date.now(),
+  thresholdDays: number = ACTIVE_THRESHOLD_DAYS
+): boolean {
+  if (
+    lastModified == null ||
+    !Number.isFinite(lastModified) ||
+    lastModified <= 0
+  )
+    return false;
+  const diffMs = nowMs - lastModified * 1000;
+  if (diffMs < 0) return true;
+  return diffMs < thresholdDays * 24 * 60 * 60 * 1000;
+}
+
+export function loadPreserveActive(): boolean {
+  try {
+    const raw = localStorage.getItem(PRESERVE_ACTIVE_KEY);
+    if (raw == null) return true;
+    return raw !== "0" && raw.toLowerCase() !== "false";
+  } catch {
+    return true;
+  }
+}
+
+export function savePreserveActive(enabled: boolean) {
+  try {
+    localStorage.setItem(PRESERVE_ACTIVE_KEY, enabled ? "1" : "0");
+  } catch {
+    // Ignore storage failures (private mode); filter simply won't persist.
+  }
 }

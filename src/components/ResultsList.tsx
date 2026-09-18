@@ -1,6 +1,14 @@
 import { useMemo, useState } from "react";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
-import { filterFoundItems, formatBytes, type FoundItem } from "../lib/sysper";
+import {
+  filterFoundItems,
+  formatBytes,
+  formatRelativeAge,
+  isActiveProject,
+  loadPreserveActive,
+  savePreserveActive,
+  type FoundItem,
+} from "../lib/sysper";
 
 interface Props {
   items: FoundItem[];
@@ -32,10 +40,36 @@ const TYPE_HINT: Record<string, string> = {
 
 export default function ResultsList({ items, cleaning, onClean }: Props) {
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(items.map((i) => i.path))
+  const [preserveActive, setPreserveActive] = useState<boolean>(() =>
+    loadPreserveActive()
   );
+  const [selected, setSelected] = useState<Set<string>>(() => {
+    const preserve = loadPreserveActive();
+    return new Set(
+      items
+        .filter((i) => !(preserve && isActiveProject(i.last_modified)))
+        .map((i) => i.path)
+    );
+  });
   const [open, setOpen] = useState<Set<string>>(() => new Set());
+
+  function togglePreserve(next: boolean) {
+    setPreserveActive(next);
+    savePreserveActive(next);
+    setSelected((prev) => {
+      const updated = new Set(prev);
+      if (next) {
+        for (const item of items) {
+          if (isActiveProject(item.last_modified)) updated.delete(item.path);
+        }
+      } else {
+        for (const item of items) {
+          if (isActiveProject(item.last_modified)) updated.add(item.path);
+        }
+      }
+      return updated;
+    });
+  }
 
   const filteredItems = useMemo(
     () => filterFoundItems(items, query),
@@ -109,6 +143,9 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
   const hasTarget = selectedItems.some((i) => i.item_type === "target");
   const totalSize = items.reduce((n, i) => n + i.size, 0);
   const filteredSize = filteredItems.reduce((n, i) => n + i.size, 0);
+  const preservedCount = preserveActive
+    ? items.filter((i) => isActiveProject(i.last_modified)).length
+    : 0;
 
   if (items.length === 0) {
     return (
@@ -135,15 +172,33 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
         <p className="mt-2 text-neutral-500">
           in {items.length} folders/files · {groups.length} types
         </p>
-        <label className="mt-4 inline-flex cursor-pointer items-center gap-2 text-sm font-medium">
-          <input
-            type="checkbox"
-            checked={allSelected}
-            onChange={(e) => selectAll(e.target.checked)}
-            className="h-4 w-4 accent-black dark:accent-white"
-          />
-          Select all
-        </label>
+        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+          <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={(e) => selectAll(e.target.checked)}
+              className="h-4 w-4 accent-black dark:accent-white"
+            />
+            Select all
+          </label>
+          <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={preserveActive}
+              onChange={(e) => togglePreserve(e.target.checked)}
+              className="h-4 w-4 accent-black dark:accent-white"
+            />
+            Preserve active projects (&lt;14d)
+          </label>
+        </div>
+        {preserveActive && preservedCount > 0 && (
+          <p className="mt-2 text-xs text-neutral-500">
+            {preservedCount} active project{preservedCount === 1 ? "" : "s"}{" "}
+            preserved — untouched longer to avoid rebuilds. Uncheck to include
+            them.
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -251,6 +306,9 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
         const paths = list.map((i) => i.path);
         const groupChecked = paths.every((p) => selected.has(p));
         const groupSize = list.reduce((n, i) => n + i.size, 0);
+        const activeInGroup = list.filter((i) =>
+          isActiveProject(i.last_modified)
+        ).length;
         const isOpen = open.has(type);
         return (
           <div
@@ -266,7 +324,10 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
                   className="h-4 w-4 accent-black dark:accent-white"
                 />
                 {type}
-                <span className="text-neutral-500">· {list.length}</span>
+                <span className="text-neutral-500">
+                  · {list.length}
+                  {activeInGroup > 0 && ` · ${activeInGroup} active`}
+                </span>
               </label>
               <div className="flex shrink-0 items-center gap-3">
                 <span className="text-sm font-medium tabular-nums">
@@ -284,57 +345,80 @@ export default function ResultsList({ items, cleaning, onClean }: Props) {
             </div>
             {isOpen && (
               <ul className="max-h-56 divide-y divide-neutral-100 overflow-y-auto dark:divide-neutral-900">
-                {list.map((item) => (
-                  <li
-                    key={item.path}
-                    className="flex items-center gap-3 px-4 py-2 text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selected.has(item.path)}
-                      onChange={() => toggle(item.path)}
-                      className="h-4 w-4 shrink-0 accent-black dark:accent-white"
-                    />
-                    <span
-                      className="min-w-0 flex-1 truncate font-mono text-xs"
-                      title={item.path}
+                {list.map((item) => {
+                  const active = isActiveProject(item.last_modified);
+                  const ageLabel = formatRelativeAge(item.last_modified);
+                  const ageTitle =
+                    item.last_modified != null
+                      ? `${item.path} — modified ${new Date(
+                          item.last_modified * 1000
+                        ).toLocaleString()}`
+                      : `${item.path} — modification time unknown`;
+                  return (
+                    <li
+                      key={item.path}
+                      className="flex items-center gap-3 px-4 py-2 text-sm"
                     >
-                      {item.path}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        try {
-                          await revealItemInDir(item.path);
-                        } catch {
-                          // Silently handle if environment lacks opener support
-                        }
-                      }}
-                      title="Show in file manager"
-                      aria-label={`Show ${item.path} in file manager`}
-                      className="shrink-0 rounded-md p-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-white"
-                    >
-                      <svg
-                        className="h-3.5 w-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
+                      <input
+                        type="checkbox"
+                        checked={selected.has(item.path)}
+                        onChange={() => toggle(item.path)}
+                        aria-label={`Select ${item.path} (${ageLabel})`}
+                        className="h-4 w-4 shrink-0 accent-black dark:accent-white"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span
+                          className="block truncate font-mono text-xs"
+                          title={item.path}
+                        >
+                          {item.path}
+                        </span>
+                        <span
+                          title={ageTitle}
+                          className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                            active
+                              ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200"
+                              : "bg-neutral-100 text-neutral-500 dark:bg-neutral-900 dark:text-neutral-400"
+                          }`}
+                        >
+                          {ageLabel}
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await revealItemInDir(item.path);
+                          } catch {
+                            // Silently handle if environment lacks opener support
+                          }
+                        }}
+                        title="Show in file manager"
+                        aria-label={`Show ${item.path} in file manager`}
+                        className="shrink-0 rounded-md p-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-white"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                      </svg>
-                    </button>
-                    <span className="shrink-0 font-medium tabular-nums">
-                      {formatBytes(item.size)}
-                    </span>
-                  </li>
-                ))}
+                        <svg
+                          className="h-3.5 w-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
+                        </svg>
+                      </button>
+                      <span className="shrink-0 font-medium tabular-nums">
+                        {formatBytes(item.size)}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
