@@ -168,6 +168,9 @@ test.describe("Sysper Desktop E2E and Visual Workflows", () => {
       page.getByText("untouched for 6 months").first()
     ).toBeVisible();
     await search.fill("");
+    await page.screenshot({
+      path: "test-results/screenshots/age-preserve.png",
+    });
 
     // Active items start deselected; including them re-selects all 5.
     await preserve.uncheck();
